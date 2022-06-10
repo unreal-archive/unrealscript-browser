@@ -1,0 +1,76 @@
+#source {
+	background-color: #fdf6e3;
+}
+
+header {
+	background-color: #fdf6e3;
+}
+
+#script {
+	background-color: #fdf6e3;
+}
+
+#lines {
+	background-color: #eee8d5;
+	border: none;
+}
+
+/* Code Formatting */
+
+#script pre {
+	color: #586e75;
+}
+
+pre .cmt {
+	color: #839496;
+}
+
+pre .dir {
+	color: #839496;
+	font-weight: bold;
+}
+
+pre .cls {
+	font-weight: bold;
+}
+
+pre .op {
+	color: #cb4b16;
+	font-weight: normal;
+}
+
+pre .kw {
+	color: #859900;
+}
+pre .basic {
+	color: #b58900;
+}
+
+pre .num {
+	color: #cb4b16;
+}
+
+pre .bool {
+	color: #cb4b16;
+}
+
+pre .name {
+	color: #2aa198;
+}
+
+pre .none {
+	color: #2aa198;
+}
+
+pre .str {
+	color: #2aa198;
+}
+
+pre .lcl {
+	color: #268bd2;
+}
+
+pre .var {
+	color: #268bd2;
+	font-weight: bold;
+}

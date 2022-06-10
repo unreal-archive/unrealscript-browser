@@ -1,0 +1,90 @@
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.StandardOpenOption
+
+plugins {
+	// Apply the application plugin to add support for building a CLI application in Java.
+	id 'application'
+	id 'antlr'
+}
+
+
+group = 'net.shrimpworks'
+version = "0.1"
+
+application {
+	// Define the main class for the application.
+	mainClass = 'net.shrimpworks.unreal.scriptbrowser.App'
+}
+
+repositories {
+	// Use Maven Central for resolving dependencies.
+	mavenCentral()
+}
+
+dependencies {
+	antlr 'org.antlr:antlr4:4.10.1'
+
+	implementation 'org.freemarker:freemarker:2.3.31'
+}
+
+jar {
+	manifest {
+		attributes(
+				'Implementation-Title': project.name,
+				'Implementation-Version': project.version,
+				'Main-Class': application.mainClassName,
+		)
+	}
+}
+
+task execJar(type: Jar) {
+	// exclude jar signatures - else it invalidates our fat jar
+	exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+	archiveClassifier = "exec"
+	archiveFileName = "${archiveBaseName.get()}-${archiveClassifier.get()}.${archiveExtension.get()}"
+	from sourceSets.main.output
+
+	dependsOn configurations.runtimeClasspath
+
+	manifest {
+		attributes(
+				'Implementation-Title': project.name,
+				'Implementation-Version': project.version,
+				'Main-Class': application.mainClassName,
+				'Class-Path': configurations.runtimeClasspath.files.collect { it.getName() }.join(' ')
+		)
+	}
+
+	// build the fat executable jar file
+	from {
+		configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+	}
+}
+
+/**
+ * Create list of static files, used for later extraction from the jar to disk.
+ */
+processResources.doLast {
+	def wwwStaticDir = projectDir.toPath().resolve('src/main/resources/net/shrimpworks/unreal/scriptbrowser/www/static')
+	def destFile = buildDir.toPath().resolve('resources/main/net/shrimpworks/unreal/scriptbrowser/www/static.list')
+	def staticList = new StringBuilder()
+	files { fileTree(wwwStaticDir).matching { exclude('**/*.xcf') } }.each {
+		staticList.append(wwwStaticDir.getParent().relativize(it.toPath())).append("\t").append(it.lastModified()).append("\n")
+	}
+	Files.write(destFile, staticList.toString().replaceAll("\\\\", "/").getBytes(StandardCharsets.UTF_8),
+			StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
+}
+
+testing {
+	suites {
+		// Configure the built-in test suite
+		test {
+			// Use JUnit Jupiter test framework
+			useJUnitJupiter('5.8.1')
+		}
+	}
+}

@@ -1,0 +1,158 @@
+body {
+	margin: 0;
+	font-family: sans-serif;
+	text-rendering: optimizeLegibility;
+}
+
+/* Index layout */
+
+#page {
+	display: grid;
+	grid-template: "header source"
+	               "tree source";
+	grid-template-columns: 400px 1fr;
+	grid-template-rows: 40px 1fr;
+	grid-gap: 0px;
+	width: 100vw;
+	height: 100vh;
+}
+
+#tree {
+	grid-area: tree;
+	overflow: scroll;
+	height: 100%;
+	width: 100%;
+}
+
+header {
+	grid-area: header;
+	position: sticky;
+	top: 0;
+}
+
+#source {
+	grid-area: source;
+	width: 100%;
+	height: 100%;
+	border: none;
+}
+
+/* Tree Style */
+
+#tree .node a {
+	/*display: block;*/
+	cursor: pointer;
+}
+
+#tree .node .pad {
+	display: inline-block;
+	width: 20px;
+}
+
+#tree .node .children {
+	display: none;
+}
+#tree .node .children.open {
+	display: inherit;
+}
+
+/* Source View Layout */
+
+h1 {
+	margin: 0;
+}
+
+#script {
+	display: grid;
+	grid-template: "lines source";
+	grid-template-columns: 50px 1fr;
+	grid-gap: 10px;
+
+	width: 100vw;
+	min-height: 100vh;
+}
+
+#lines {
+	grid-area: lines;
+	min-height: 100%;
+
+	font-family: monospace;
+	text-align: right;
+	margin: 0;
+	padding: 5px;
+	line-height: 1.25em;
+
+	color: gray;
+	background-color: #e9e9e9;
+}
+
+#script pre {
+	grid-area: source;
+
+	tab-size: 2;
+	margin: 0;
+	padding: 5px;
+	line-height: 1.25em;
+
+	color: #333;
+}
+
+/* Code Formatting */
+
+pre .cmt {
+	color: gray;
+}
+
+pre .dir {
+	color: darkgreen;
+}
+
+pre .cls {
+	font-weight: bold;
+}
+
+pre .ident {
+	font-weight: bold;
+}
+
+pre .op {
+	color: brown;
+	font-weight: bold;
+}
+
+pre .kw {
+	color: black;
+}
+
+pre .basic {
+	color: crimson;
+}
+
+pre .num {
+	color: navy;
+}
+
+pre .bool {
+	color: navy;
+}
+
+pre .name {
+	color: darkmagenta;
+}
+
+pre .none {
+	color: darkmagenta;
+}
+
+pre .str {
+	color: chocolate;
+}
+
+pre .lcl {
+	color: blue;
+}
+
+pre .var {
+	color: blue;
+	font-weight: bold;
+}
