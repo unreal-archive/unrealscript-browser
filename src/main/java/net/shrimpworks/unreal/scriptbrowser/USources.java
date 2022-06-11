@@ -22,6 +22,7 @@ public class USources {
 	}
 
 	public Optional<UClass> clazz(String name) {
+		if (name == null) return Optional.empty();
 		return clazz(name, (String)null);
 	}
 

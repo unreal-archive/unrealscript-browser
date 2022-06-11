@@ -1,6 +1,8 @@
 package net.shrimpworks.unreal.scriptbrowser;
 
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.RuleContext;
@@ -14,6 +16,9 @@ class ClassInfoListener extends UnrealScriptBaseListener {
 	private final UPackage pkg;
 
 	private UClass clazz;
+
+	// stateful processing
+	private boolean inState = false;
 
 	public ClassInfoListener(Path sourceFile, UPackage pkg) {
 		this.sourceFile = sourceFile;
@@ -34,9 +39,20 @@ class ClassInfoListener extends UnrealScriptBaseListener {
 	}
 
 	@Override
+	public void enterStatebody(UnrealScriptParser.StatebodyContext ctx) {
+		inState = true;
+	}
+
+	@Override
+	public void exitStatebody(UnrealScriptParser.StatebodyContext ctx) {
+		inState = false;
+	}
+
+	@Override
 	public void enterVardecl(UnrealScriptParser.VardeclContext ctx) {
 		String type = null;
-		if (ctx.vartype().classtype() != null) type = ctx.vartype().classtype().getText();
+		if (ctx.vartype().packageidentifier() != null) type = ctx.vartype().packageidentifier().getText();
+		else if (ctx.vartype().classtype() != null) type = ctx.vartype().classtype().getText();
 		else if (ctx.vartype().basictype() != null) type = ctx.vartype().basictype().getText();
 		else if (ctx.vartype().enumdecl() != null) type = ctx.vartype().enumdecl().identifier().getText();
 		else if (ctx.vartype().arraydecl() != null) type = ctx.vartype().arraydecl().identifier().getText();
@@ -52,6 +68,9 @@ class ClassInfoListener extends UnrealScriptBaseListener {
 
 	@Override
 	public void enterNormalfunc(UnrealScriptParser.NormalfuncContext ctx) {
+		// skip tracking function declarations within states for now
+		if (inState) return;
+
 		String type = null;
 		if (ctx.localtype() != null) type = ctx.localtype().getText();
 		clazz.addMember(UClass.UMember.UMemberKind.FUNCTION, type, ctx.identifier().getText());

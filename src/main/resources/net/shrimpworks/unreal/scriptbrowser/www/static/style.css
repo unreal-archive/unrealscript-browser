@@ -52,6 +52,7 @@ header {
 #tree .node .children {
 	display: none;
 }
+
 #tree .node .children.open {
 	display: inherit;
 }
@@ -95,6 +96,13 @@ h1 {
 	line-height: 1.25em;
 
 	color: #333;
+}
+
+#script pre a[href] {
+	color: inherit;
+	text-decoration: inherit;
+	font-weight: inherit;
+	border-bottom: 0.5px dotted navy;
 }
 
 /* Code Formatting */

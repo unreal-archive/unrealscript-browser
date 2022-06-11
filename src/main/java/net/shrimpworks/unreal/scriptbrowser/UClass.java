@@ -1,9 +1,7 @@
 package net.shrimpworks.unreal.scriptbrowser;
 
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,10 +23,11 @@ public class UClass implements Comparable<UClass> {
 
 		this.params = new HashSet<>();
 		this.members = new HashSet<>();
+		addMember(UMember.UMemberKind.VARIABLE, parent, "super");
 	}
 
 	public void addMember(UMember.UMemberKind kind, String type, String name) {
-		members.add(new UMember(kind, type, name));
+		members.add(new UMember(this, kind, type, name));
 	}
 
 	@Override
@@ -49,19 +48,36 @@ public class UClass implements Comparable<UClass> {
 				  .or(() -> pkg.sourceSet.clazz(parent));
 	}
 
-	public Map<UClass, Set<String>> variables() {
+	public Set<UMember> variables() {
 		return members(UMember.UMemberKind.VARIABLE);
 	}
 
-	public Map<UClass, Set<String>> functions() {
+	public Optional<UMember> variable(String name) {
+		return localMember(UMember.UMemberKind.VARIABLE, name)
+			.or(() -> variables().stream().filter(v -> v.name.equalsIgnoreCase(name)).findFirst());
+	}
+
+	public Set<UMember> functions() {
 		return members(UMember.UMemberKind.FUNCTION);
 	}
 
-	private Map<UClass, Set<String>> members(UMember.UMemberKind kind) {
-		Map<UClass, Set<String>> mems = new HashMap<>();
-		mems.put(this, members.stream().filter(m -> m.kind == kind).map(m -> m.name).collect(Collectors.toSet()));
-		parent().ifPresent(p -> mems.putAll(p.members(kind)));
+	public Optional<UMember> function(String name) {
+		return localMember(UMember.UMemberKind.FUNCTION, name)
+			.or(() -> functions().stream().filter(v -> v.name.equalsIgnoreCase(name)).findFirst());
+	}
+
+	private Set<UMember> members(UMember.UMemberKind kind) {
+		Set<UMember> mems = localMembers(kind);
+		parent().ifPresent(p -> mems.addAll(p.members(kind)));
 		return mems;
+	}
+
+	private Set<UMember> localMembers(UMember.UMemberKind kind) {
+		return members.stream().filter(m -> m.kind == kind).collect(Collectors.toSet());
+	}
+
+	private Optional<UMember> localMember(UMember.UMemberKind kind, String name) {
+		return members.stream().filter(m -> m.kind == kind && m.name.equalsIgnoreCase(name)).findFirst();
 	}
 
 	public static class UMember {
@@ -73,14 +89,21 @@ public class UClass implements Comparable<UClass> {
 			ENUM
 		}
 
+		public final UClass clazz;
 		public final UMemberKind kind;
 		public final String type;
 		public final String name;
 
-		public UMember(UMemberKind kind, String type, String name) {
+		public UMember(UClass clazz, UMemberKind kind, String type, String name) {
+			this.clazz = clazz;
 			this.kind = kind;
 			this.type = type;
 			this.name = name;
+		}
+
+		@Override
+		public String toString() {
+			return String.format("%s %s %s.%s", kind, type == null ? "[no type]" : type, clazz.name, name);
 		}
 	}
 }

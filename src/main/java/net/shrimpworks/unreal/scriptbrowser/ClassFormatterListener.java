@@ -1,10 +1,10 @@
 package net.shrimpworks.unreal.scriptbrowser;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -22,8 +22,10 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	private final TokenStreamRewriter rewriter;
 
 	// stateful processing
-	private final Set<String> locals = new HashSet<>();
+	private final Map<String, String> locals = new HashMap<>(); // local, type
 	private boolean inFunction = false;
+	private boolean inState = false;
+	private Optional<UClass> pathType = Optional.empty();
 
 	public ClassFormatterListener(UClass clazz, CommonTokenStream tokens) {
 		this.clazz = clazz;
@@ -81,6 +83,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 
 	@Override
 	public void enterBasictype(UnrealScriptParser.BasictypeContext ctx) {
+		// FIXME style to apply to all types?
 		tokenStyle(ctx, "basic");
 	}
 
@@ -115,60 +118,84 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		ctx.varparams().forEach(p -> tokenStyle(p, "kw"));
 		ctx.varidentifier().forEach(p -> {
 			tokenStyle(p, "var");
-			tokenAnchor(p, "V_" + p.identifier().getText().toLowerCase());
+			tokenAnchor(p, p.identifier().getText());
 		});
 
-		if (ctx.vartype().classtype() != null) linkClass(ctx.vartype().classtype());
+		if (ctx.vartype().packageidentifier() != null) linkClass(ctx.vartype().packageidentifier());
+		else if (ctx.vartype().classtype() != null) linkClass(ctx.vartype().classtype().packageidentifier());
+		// FIXME link to all the other types here
 //		else if (ctx.vartype().basictype() != null) type = ctx.vartype().basictype().getText();
 //		else if (ctx.vartype().enumdecl() != null) type = ctx.vartype().enumdecl().identifier().getText();
 //		else if (ctx.vartype().arraydecl() != null) type = ctx.vartype().arraydecl().identifier().getText();
-//		else if (ctx.vartype().dynarraydecl() != null) {
-//			if (ctx.vartype().dynarraydecl().basictype() != null) type = ctx.vartype().dynarraydecl().basictype().getText();
-//			else if (ctx.vartype().dynarraydecl().classtype() != null) type = ctx.vartype().dynarraydecl().classtype().getText();
-//		}
+		else if (ctx.vartype().dynarraydecl() != null) {
+			if (ctx.vartype().dynarraydecl().classtype() != null) linkClass(ctx.vartype().dynarraydecl().classtype().packageidentifier());
+		}
 	}
 
-	private void linkClass(UnrealScriptParser.ClasstypeContext ctx) {
+	private void linkClass(UnrealScriptParser.PackageidentifierContext ctx) {
+		if (ctx == null) return; // `class` type
+
 		Optional<UPackage> pkg = Optional.empty();
-		if (ctx.packageidentifier().identifier() != null) {
-			pkg = clazz.pkg.sourceSet.pkg(ctx.packageidentifier().identifier().getText());
+		if (ctx.identifier() != null) {
+			pkg = clazz.pkg.sourceSet.pkg(ctx.identifier().getText());
 		}
 
-		
-
-		pkg
-			.flatMap(p -> p.clazz(ctx.packageidentifier().classname().identifier().getText()))
-			.ifPresentOrElse(
-				cls -> tokenLink(ctx, String.format("../%s/%s.html", cls.pkg.name, cls.name)),
-				() -> clazz.pkg.sourceSet.clazz(ctx.packageidentifier().classname().identifier().getText()));
-
-
-		pkg
-			.flatMap(p -> p.clazz(ctx.packageidentifier().classname().identifier().getText()))
-			.ifPresentOrElse(
-				cls -> tokenLink(ctx, String.format("../%s/%s.html", cls.pkg.name, cls.name)),
-				() -> clazz.pkg.sourceSet.clazz(ctx.packageidentifier().classname().identifier().getText()));
-
-//		clazz.parent()
-//			 .flatMap(p -> p.functions().entrySet().stream()
-//							.filter(kv -> kv.getValue().contains(ctx.getText()))
-//							.findFirst()
-//			 )
-//			 .ifPresent(f -> tokenLink(
-//				 tokens.get(ctx.start.getTokenIndex() - 2), ctx.stop,
-//				 String.format("../%s/%s.html#F_%s", f.getKey().pkg.name, f.getKey().name, ctx.getText().toLowerCase())
-//			 ));
-//
-//		tokenLink(
-//			tokens.get(ctx.start.getTokenIndex() - 2), ctx.stop,
-//			String.format("../%s/%s.html#F_%s", f.getKey().pkg.name, f.getKey().name, ctx.getText().toLowerCase())
-//		)
+		clazz.pkg.sourceSet.clazz(
+			ctx.classname().identifier().getText(), pkg.orElse(null)
+		).ifPresent(cls -> classLink(ctx, cls));
 	}
 
 	@Override
 	public void enterLocaldecl(UnrealScriptParser.LocaldeclContext ctx) {
+		String type = null;
+		if (ctx.localtype().packageidentifier() != null) {
+			type = ctx.localtype().packageidentifier().getText();
+			linkClass(ctx.localtype().packageidentifier());
+		}
+		else if (ctx.localtype().classtype() != null) {
+			type = ctx.localtype().classtype().getText();
+			linkClass(ctx.localtype().packageidentifier());
+		}
+		// FIXME link to more types
+		else if (ctx.localtype().basictype() != null) type = ctx.localtype().basictype().getText();
+		else if (ctx.localtype().arraydecl() != null) type = ctx.localtype().arraydecl().identifier().getText();
+		else if (ctx.localtype().dynarraydecl() != null) {
+			if (ctx.localtype().dynarraydecl().basictype() != null) type = ctx.localtype().dynarraydecl().basictype().getText();
+			else if (ctx.localtype().dynarraydecl().classtype() != null) type = ctx.localtype().dynarraydecl().classtype().getText();
+		}
+		final String lolFinal = type;
+
+		ctx.identifier().forEach(p -> locals.put(p.getText().toLowerCase(), lolFinal));
+
 		tokenStyle(ctx.LOCAL().getSymbol(), "kw");
-		ctx.identifier().forEach(p -> locals.add(p.getText()));
+	}
+
+	@Override
+	public void enterNormalfunc(UnrealScriptParser.NormalfuncContext ctx) {
+		ctx.functionargs().forEach(a -> {
+			String type = null;
+			if (a.functionargtype().packageidentifier() != null) {
+				type = a.functionargtype().packageidentifier().getText();
+				linkClass(a.functionargtype().packageidentifier());
+			}
+			else if (a.functionargtype().classtype() != null) {
+				type = a.functionargtype().classtype().getText();
+				linkClass(a.functionargtype().classtype().packageidentifier());
+			}
+			// FIXME link to more types
+			else if (a.functionargtype().basictype() != null) type = a.functionargtype().basictype().getText();
+			else if (a.functionargtype().arraydecl() != null) type = a.functionargtype().arraydecl().identifier().getText();
+			else if (a.functionargtype().dynarraydecl() != null) {
+				if (a.functionargtype().dynarraydecl().basictype() != null) type = a.functionargtype().dynarraydecl().basictype().getText();
+				else if (a.functionargtype().dynarraydecl().classtype() != null)
+					type = a.functionargtype().dynarraydecl().classtype().getText();
+			}
+			final String lolFinal = type;
+
+			locals.put(a.identifier().getText().toLowerCase(), lolFinal);
+
+			tokenStyle(a.identifier(), "lcl");
+		});
 	}
 
 	@Override
@@ -183,31 +210,70 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	}
 
 	@Override
+	public void enterStatebody(UnrealScriptParser.StatebodyContext ctx) {
+		inState = true;
+	}
+
+	@Override
+	public void exitStatebody(UnrealScriptParser.StatebodyContext ctx) {
+		inState = false;
+	}
+
+	@Override
 	public void enterIdentifier(UnrealScriptParser.IdentifierContext ctx) {
 		if (!inFunction) return;
 
-		if (!Objects.equals(tokens.get(ctx.start.getTokenIndex() - 1).getText(), ".") && locals.contains(ctx.getText())) {
+		// FIXME declare next/prev tokens first and reuse
+		// FIXME consume whitespace between tokens
+
+		if (!Objects.equals(tokens.get(ctx.start.getTokenIndex() - 1).getText(), ".") && locals.containsKey(ctx.getText().toLowerCase())) {
+			// local variable
 			tokenStyle(ctx, "lcl");
-		} else if (!Objects.equals(tokens.get(ctx.start.getTokenIndex() - 1).getText(), ".")) {
-			if (clazz.variables().values().stream().anyMatch(v -> v.contains(ctx.getText()))) {
-				tokenStyle(ctx, "var");
-			}
-		} else if (Objects.equals(tokens.get(ctx.stop.getTokenIndex() + 1).getText(), "(")) {
-			if (Objects.equals(tokens.get(ctx.start.getTokenIndex() - 2).getText().toLowerCase(), "super")) {
-				clazz.parent()
-					 .flatMap(p -> p.functions().entrySet().stream()
-									.filter(kv -> kv.getValue().contains(ctx.getText()))
-									.findFirst()
-					 )
-					 .ifPresent(f -> tokenLink(
-						 tokens.get(ctx.start.getTokenIndex() - 2), ctx.stop,
-						 String.format("../%s/%s.html#F_%s", f.getKey().pkg.name, f.getKey().name, ctx.getText().toLowerCase())
-					 ));
+		} else if (Objects.equals(tokens.get(ctx.stop.getTokenIndex() + 1).getText(), "(")
+				   || Objects.equals(tokens.get(ctx.getParent().stop.getTokenIndex() + 1).getText(), "(")
+		) {
+			// function calls - note, super is found via member variable `Super` on UClass
+			if (Objects.equals(tokens.get(ctx.start.getTokenIndex() - 1).getText(), ".")) {
+				// someVar.Thing()
+				Optional.ofNullable(locals.get(tokens.get(ctx.start.getTokenIndex() - 2).getText().toLowerCase()))
+						.flatMap(clazz.pkg.sourceSet::clazz)
+						.or(() -> clazz.variable(tokens.get(ctx.start.getTokenIndex() - 2).getText())
+									   .flatMap(v -> v.clazz.pkg.sourceSet.clazz(v.type)))
+						.flatMap(c -> c.function(ctx.getText()))
+						.ifPresent(f -> memberLink(ctx, f));
 			} else {
-				if (clazz.functions().values().stream().anyMatch(v -> v.contains(ctx.getText()))) {
-					tokenLink(ctx, "#F_" + ctx.getText().toLowerCase());
-				}
+				// same (or inherited) class function()
+				clazz.function(ctx.getText())
+					 .ifPresent(f -> memberLink(ctx, f));
 			}
+		} else if (!Objects.equals(tokens.get(ctx.start.getTokenIndex() - 1).getText(), ".")) {
+			// same (or inherited) class variable
+			// FIXME link to var
+			clazz.variable(ctx.getText()).ifPresent(v -> {
+				tokenStyle(ctx, "var");
+				memberLink(ctx, v);
+			});
+		}
+
+		if (ctx.stop.getTokenIndex() + 1 < tokens.size()
+			&& (Objects.equals(tokens.get(ctx.stop.getTokenIndex() + 1).getText(), ".")
+				|| Objects.equals(tokens.get(ctx.getParent().stop.getTokenIndex() + 1).getText(), "."))) {
+			pathType.flatMap(c -> c.variable(ctx.getText()))
+					.ifPresent(v -> memberLink(ctx, v));
+
+			pathType.ifPresentOrElse(
+				p -> pathType = p.variable(ctx.getText()).flatMap(v -> v.clazz.pkg.sourceSet.clazz(v.type)),
+				() -> pathType = Optional.ofNullable(locals.get(ctx.getText().toLowerCase()))
+										 .flatMap(clazz.pkg.sourceSet::clazz)
+										 .or(() -> clazz.variable(ctx.getText())
+														.flatMap(v -> v.clazz.pkg.sourceSet.clazz(v.type)))
+			);
+		} else if (Objects.equals(tokens.get(ctx.start.getTokenIndex() - 1).getText(), ".")) {
+			// SomeVar.member
+			pathType.flatMap(c -> c.variable(ctx.getText()))
+					.ifPresent(v -> memberLink(ctx, v));
+
+			pathType = Optional.empty();
 		}
 	}
 
@@ -234,8 +300,8 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	@Override
 	public void enterFunctiondecl(UnrealScriptParser.FunctiondeclContext ctx) {
 		if (ctx.normalfunc() != null) {
-			tokenAnchor(ctx.normalfunc().identifier(), "F_" + ctx.normalfunc().identifier().getText().toLowerCase());
 			tokenStyle(ctx.normalfunc().identifier(), "ident");
+			tokenAnchor(ctx.normalfunc().identifier(), ctx.normalfunc().identifier().getText());
 			ctx.normalfunc().functionparams().forEach(p -> tokenStyle(p, "kw"));
 		} else if (ctx.operatorfunc() != null) {
 			ctx.operatorfunc().functionparams().forEach(p -> tokenStyle(p, "kw"));
@@ -247,6 +313,8 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	public void enterReplicationblock(UnrealScriptParser.ReplicationblockContext ctx) {
 		tokenStyle(ctx.REPLICATION().getSymbol(), "kw");
 	}
+
+	// FIXME states
 
 	@Override
 	public void enterStatement(UnrealScriptParser.StatementContext ctx) {
@@ -263,17 +331,24 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	}
 
 	private void tokenAnchor(ParserRuleContext ctx, String name) {
-		rewriter.insertBefore(ctx.start, "«a id=\"" + name + "\"»");
+		rewriter.insertBefore(ctx.start, "«a id=\"" + name.toLowerCase() + "\"»");
 		rewriter.insertAfter(ctx.stop, "«/a»");
 	}
 
-	private void tokenLink(Token start, Token stop, String path) {
-		rewriter.insertBefore(start, "«a href=\"" + path + "\"»");
+	private void memberLink(Token start, Token stop, UClass.UMember member) {
+		rewriter.insertBefore(start, String.format("«a href=\"../%s/%s.html#%s\"»",
+												   member.clazz.pkg.name, member.clazz.name, member.name.toLowerCase()));
 		rewriter.insertAfter(stop, "«/a»");
 	}
 
-	private void tokenLink(ParserRuleContext ctx, String path) {
-		rewriter.insertBefore(ctx.start, "«a href=\"" + path + "\"»");
+	private void memberLink(ParserRuleContext ctx, UClass.UMember member) {
+		rewriter.insertBefore(ctx.start, String.format("«a href=\"../%s/%s.html#%s\"»",
+													   member.clazz.pkg.name, member.clazz.name, member.name.toLowerCase()));
+		rewriter.insertAfter(ctx.stop, "«/a»");
+	}
+
+	private void classLink(ParserRuleContext ctx, UClass cls) {
+		rewriter.insertBefore(ctx.start, String.format("«a href=\"../%s/%s.html\"»", cls.pkg.name, cls.name));
 		rewriter.insertAfter(ctx.stop, "«/a»");
 	}
 
