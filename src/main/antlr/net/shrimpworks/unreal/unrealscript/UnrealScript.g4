@@ -235,7 +235,7 @@ ifstatement              : IF parExpression codeblock ( ELSE codeblock )?;
 switchstatement          : SWITCH (parExpression | expression) '{' ( caserule )* ( defaultrule )? '}';
 whileloop                : WHILE parExpression codeblock;
 doloop                   : DO codeblock UNTIL '(' expression ')';
-foreachloop              : FOREACH qualifiedidentifier '(' expressionList? ')' codeblock;
+foreachloop              : FOREACH qualifiedidentifier ('(' expressionList? ')') codeblock;
 forloop                  : FOR '(' identifier '=' expression ';' expression ';' expression ')' codeblock?;
 returnstatement          : RETURN ( expression )? ';';
 
@@ -282,8 +282,8 @@ defpropvalue             : ( constvalue | stringlist | floatconst | intconst | k
 defpropidentifier        : identifier ( ( '(' IntVal ')' ) | ( '[' IntVal ']' ) )?;
 
 qualifiedidentifier      : ( ( CLASS '\'' packageidentifier '\'' '.' DEFAULT '.' identifier )
-                           | ( ( identifier '.' )* identifier )
-                           );
+                           | ( ( identifier ('(' ')')? '.' )* identifier ('(' ')')? )
+                           ) ;
 identifierlist           : identifier ( ',' identifier )*;
 
 keyvalue                 : identifier '=' ( constvalue | floatconst | intconst | identifier );

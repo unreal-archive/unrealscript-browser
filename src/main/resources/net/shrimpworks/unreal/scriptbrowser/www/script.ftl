@@ -7,7 +7,6 @@
 </head>
 
 <body>
-	<header><h1>${clazz.pkg.name} / ${clazz.name}</h1></header>
 	<article id="script">
 		<section id="lines">
 			<#list 1..lines as line>
@@ -20,5 +19,23 @@
 		</#outputformat>
 	</article>
 </body>
+
+<script>
+	document.addEventListener("DOMContentLoaded", () => {
+	  window.addEventListener('message', (e) => {
+			const port2 = e.ports[0]
+
+			port2.postMessage({
+					"event": "loaded",
+					"pkg": "${clazz.pkg.name}",
+					"clazz": "${clazz.name}"
+			});
+
+			port2.onmessage = (m) => {
+				console.log(m.data)
+			}
+		})
+	})
+</script>
 
 </html>

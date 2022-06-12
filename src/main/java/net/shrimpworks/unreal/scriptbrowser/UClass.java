@@ -94,7 +94,8 @@ public class UClass implements Comparable<UClass> {
 			FUNCTION,
 			VARIABLE,
 			STRUCT,
-			ENUM
+			ENUM,
+			STATE
 		}
 
 		public final UClass clazz;

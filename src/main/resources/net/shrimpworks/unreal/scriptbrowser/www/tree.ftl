@@ -1,21 +1,11 @@
-<#macro treenode node depth>
-	<div class="node" data-package="${node.clazz.pkg.name?lower_case}" data-name="${node.clazz.name?lower_case}">
-		<#list 0..depth as d>
-			<#if d == depth && node.children?size gt 0>
-				<span class="pad plus">+</span>
-			<#else>
-				<span class="pad">&nbsp;</span>
-			</#if>
-		</#list>
-		<a id="${node.clazz.pkg.name}.${node.clazz.name}">
-			<span class="name">${node.clazz.name}</span>
-		</a>
-		<#list node.children>
-			<div class="children">
-				<#items as child><@treenode child depth+1/></#items>
-			</div>
-		</#list>
-	</div>
+<#macro jsonnode node depth>
+	{
+		"pkg": "${node.clazz.pkg.name}",
+		"clazz": "${node.clazz.name}",
+		"children": [
+			<#list node.children as child><@jsonnode child depth+1/>,</#list>
+		]
+	}
 </#macro>
 
 <!DOCTYPE html>
@@ -28,36 +18,85 @@
 
 <body>
 	<div id="page">
-		<section id="tree">
-			<#list nodes as node>
-				<@treenode node 0/>
-			</#list>
-		</section>
+		<header><h1 id="header"></h1></header>
 
-		<header></header>
+		<section id="tree"></section>
 
 		<iframe id="source"></iframe>
 	</div>
 </body>
 
 <script>
-	document.addEventListener("DOMContentLoaded", () => {
-		const source = document.getElementById("source")
+	const nodes = [
+	  <#list nodes as node><@jsonnode node 0/>,</#list>
+	]
+</script>
 
-		document.querySelectorAll('#tree .node').forEach(node => {
-			const a = node.querySelector("a");
-			a.addEventListener("click", () => {
-				source.src = node.dataset.package + "/" + node.dataset.name + ".html";
-			})
+<#noparse>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+	  const header = document.getElementById("header")
+	  const tree = document.getElementById("tree")
+	  const source = document.getElementById("source")
 
-			const plus = node.querySelector(".plus")
-			if (!plus) return;
-			plus.addEventListener("click", () => {
-				const kids = node.querySelector(".children")
-				if (kids) kids.classList.toggle("open")
+	  function treeNode(node, depth) {
+			const div = document.createElement('div');
+			div.classList.add("node");
+
+			const kids = document.createElement('div');
+
+			for (let i = 0; i <= depth; i++) {
+				const pad = document.createElement('span');
+				pad.classList.add("pad");
+				if (i === depth && node.children.length) {
+					pad.classList.add("plus");
+					pad.textContent = "+";
+
+					pad.addEventListener("click", () => {
+						kids.classList.toggle("open")
+					})
+				}
+				div.appendChild(pad);
+			}
+
+			const link =  document.createElement('a');
+			link.id = `${node.pkg}.${node.clazz}`
+			link.textContent = node.clazz
+			link.addEventListener("click", () => {
+				source.src = node.pkg.toLowerCase() + "/" + node.clazz.toLowerCase() + ".html";
 			})
+			div.appendChild(link)
+
+			if (node.children) {
+				kids.classList.add("children")
+				node.children.forEach((child) => {
+					kids.appendChild(treeNode(child, depth + 1));
+				});
+				div.appendChild(kids)
+			}
+			return div;
+		}
+
+	  nodes.forEach(n => tree.appendChild(treeNode(n, 0)));
+
+		source.addEventListener("load", () => {
+			const channel = new MessageChannel();
+			const port1 = channel.port1;
+
+			port1.onmessage = (m) => {
+				switch (m.data.event) {
+					case "loaded":
+						header.innerHTML = m.data.pkg + " / " + m.data.clazz
+						break;
+					default:
+						console.log("unknown message event ", m.data.type, m.data)
+		  	}
+			}
+
+			source.contentWindow.postMessage('hello frame', '*', [channel.port2]);
 		})
   })
 </script>
+</#noparse>
 
 </html>

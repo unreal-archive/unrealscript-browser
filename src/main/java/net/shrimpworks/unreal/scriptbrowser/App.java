@@ -86,13 +86,14 @@ public class App {
 
 		Generator.offloadStatic("static.list", outPath);
 
+		System.err.println("Generating navigation tree");
+		Generator.tree(children(sources, null), outPath);
+
 		System.err.println("Generating source pages");
 		sources.packages.values().forEach(pkg -> pkg.classes.values().parallelStream()
 															.filter(c -> c.kind == UClass.UClassKind.CLASS)
 															.forEach(e -> Generator.src(e, outPath)));
 
-		System.err.println("Generating navigation tree");
-		Generator.tree(children(sources, null), outPath);
 //		printTree(children(sources, null), 0);
 
 		System.err.println("Done");
@@ -101,6 +102,7 @@ public class App {
 	public static List<UClassNode> children(USources sources, UClass parent) {
 		return sources.packages.values().stream()
 							   .flatMap(p -> p.classes.values().stream())
+							   .filter(c -> c.kind == UClass.UClassKind.CLASS)
 							   .filter(c -> {
 								   if (parent == null && c.parent == null) return true;
 								   else return parent != null && parent.name.equalsIgnoreCase(c.parent);

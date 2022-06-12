@@ -4,6 +4,11 @@
 
 header {
 	background-color: #fdf6e3;
+	border-left: 50px solid #eee8d5;
+}
+
+#tree {
+	background-color: #eee8d5;
 }
 
 #script {
@@ -15,7 +20,15 @@ header {
 	border: none;
 }
 
+#script pre a[href] {
+	border-bottom: 0.5px dotted grey;
+}
+
 /* Code Formatting */
+
+#script pre a[href]:hover {
+	background-color: #eee8d5;
+}
 
 #script pre {
 	color: #586e75;

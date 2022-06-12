@@ -25,6 +25,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	private final Map<String, String> locals = new HashMap<>(); // local, type
 	private boolean inFunction = false;
 	private boolean inStateLabel = false;
+	private boolean inDefaultProps = false;
 	private Optional<UClass> typePath = Optional.empty();
 	private Optional<String> structName = Optional.empty();
 
@@ -96,6 +97,13 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		else if (ctx.StringVal() != null) tokenStyle(ctx, "str");
 		else if (ctx.NameVal() != null) tokenStyle(ctx, "name");
 		else if (ctx.NoneVal() != null) tokenStyle(ctx, "none");
+		else if (ctx.objectval() != null) {
+			// the object type will be highlighted/linked by as a classdecl
+			if (ctx.objectval().NameVal() != null) tokenStyle(ctx.objectval().NameVal().getSymbol(), "name");
+		} else if (ctx.classval() != null) {
+			tokenStyle(ctx.classval().CLASS().getSymbol(), "kw");
+			if (ctx.classval().NameVal() != null) tokenStyle(ctx.classval().NameVal().getSymbol(), "name");
+		}
 	}
 
 	@Override
@@ -129,12 +137,16 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		else if (ctx.vartype().classtype() != null) {
 			tokenStyle(ctx.vartype().classtype().CLASS().getSymbol(), "kw");
 			linkClass(ctx.vartype().classtype().packageidentifier());
-		}
-		else if (ctx.vartype().dynarraydecl() != null) {
+		} else if (ctx.vartype().dynarraydecl() != null) {
 			tokenStyle(ctx.vartype().dynarraydecl().ARRAY().getSymbol(), "kw");
 			if (ctx.vartype().dynarraydecl().classtype() != null) linkClass(ctx.vartype().dynarraydecl().classtype().packageidentifier());
 			if (ctx.vartype().dynarraydecl().packageidentifier() != null) linkClass(ctx.vartype().dynarraydecl().packageidentifier());
 		}
+	}
+
+	@Override
+	public void enterObjectval(UnrealScriptParser.ObjectvalContext ctx) {
+		linkClass(ctx.identifier(), null);
 	}
 
 	private void linkClass(UnrealScriptParser.PackageidentifierContext ctx) {
@@ -145,9 +157,11 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 			pkg = clazz.pkg.sourceSet.pkg(ctx.identifier().getText());
 		}
 
-		clazz.pkg.sourceSet.clazz(
-			ctx.classname().identifier().getText(), pkg.orElse(null)
-		).ifPresent(cls -> classLink(ctx, cls));
+		linkClass(ctx.classname().identifier(), pkg.orElse(null));
+	}
+
+	private void linkClass(UnrealScriptParser.IdentifierContext ctx, UPackage pkg) {
+		clazz.pkg.sourceSet.clazz(ctx.getText(), pkg).ifPresent(cls -> classLink(ctx, cls));
 	}
 
 	@Override
@@ -158,7 +172,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 			linkClass(ctx.localtype().packageidentifier());
 		} else if (ctx.localtype().classtype() != null) {
 			tokenStyle(ctx.localtype().classtype().CLASS().getSymbol(), "kw");
-			linkClass(ctx.localtype().packageidentifier());
+			linkClass(ctx.localtype().classtype().packageidentifier());
 		} else if (ctx.localtype().basictype() != null) type = ctx.localtype().basictype().getText();
 		else if (ctx.localtype().dynarraydecl() != null) {
 			tokenStyle(ctx.localtype().dynarraydecl().ARRAY().getSymbol(), "kw");
@@ -231,8 +245,21 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	}
 
 	@Override
+	public void enterDefaultpropertiesblock(UnrealScriptParser.DefaultpropertiesblockContext ctx) {
+		inDefaultProps = true;
+	}
+
+	@Override
+	public void exitDefaultpropertiesblock(UnrealScriptParser.DefaultpropertiesblockContext ctx) {
+		inDefaultProps = false;
+	}
+
+	@Override
 	public void enterIdentifier(UnrealScriptParser.IdentifierContext ctx) {
-		if (!inFunction && !inStateLabel) return;
+		if (!inFunction && !inStateLabel && !inDefaultProps) return;
+
+		// an objectval: Texture'Package.Texture'; this is handled elsewhere
+		if (ctx.getParent() instanceof UnrealScriptParser.ObjectvalContext) return;
 
 		int start = 1;
 		String before = tokens.get(ctx.start.getTokenIndex() - 1).getText();

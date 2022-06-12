@@ -52,6 +52,12 @@ class ClassInfoListener extends UnrealScriptBaseListener {
 	// FIXME add states and labels as members
 
 	@Override
+	public void enterStatedecl(UnrealScriptParser.StatedeclContext ctx) {
+		if (!inState) return;
+		ctx.identifier().forEach(i -> clazz.addMember(UClass.UMember.UMemberKind.STATE, null, i.getText()));
+	}
+
+	@Override
 	public void enterVardecl(UnrealScriptParser.VardeclContext ctx) {
 		String type = null;
 		if (ctx.vartype().packageidentifier() != null) type = ctx.vartype().packageidentifier().getText();

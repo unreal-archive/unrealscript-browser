@@ -8,11 +8,11 @@ body {
 
 #page {
 	display: grid;
-	grid-template: "header source"
+	grid-template: "tree header"
 	               "tree source";
 	grid-template-columns: 400px 1fr;
 	grid-template-rows: 40px 1fr;
-	grid-gap: 0px;
+	grid-gap: 0;
 	width: 100vw;
 	height: 100vh;
 }
@@ -22,12 +22,18 @@ body {
 	overflow: scroll;
 	height: 100%;
 	width: 100%;
+
+	box-shadow: -10px 0 10px -7px rgba(0,0,0,0.5) inset;
 }
 
 header {
 	grid-area: header;
-	position: sticky;
-	top: 0;
+	border-left: 50px solid #e9e9e9;
+	padding-left: 10px;
+}
+
+header h1 {
+	margin: 0;
 }
 
 #source {
@@ -49,6 +55,10 @@ header {
 	width: 20px;
 }
 
+#tree .node .pad.plus {
+	cursor: pointer;
+}
+
 #tree .node .children {
 	display: none;
 }
@@ -59,9 +69,6 @@ header {
 
 /* Source View Layout */
 
-h1 {
-	margin: 0;
-}
 
 #script {
 	display: grid;
@@ -81,7 +88,7 @@ h1 {
 	text-align: right;
 	margin: 0;
 	padding: 5px;
-	line-height: 1.25em;
+	line-height: 1.4em;
 
 	color: gray;
 	background-color: #e9e9e9;
@@ -93,7 +100,7 @@ h1 {
 	tab-size: 2;
 	margin: 0;
 	padding: 5px;
-	line-height: 1.25em;
+	line-height: 1.4em;
 
 	color: #333;
 }
@@ -106,6 +113,10 @@ h1 {
 }
 
 /* Code Formatting */
+
+#script pre a[href]:hover {
+	background-color: #e9e9e9;
+}
 
 pre .cmt {
 	color: gray;
