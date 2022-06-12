@@ -1,8 +1,6 @@
 package net.shrimpworks.unreal.scriptbrowser;
 
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.RuleContext;
@@ -17,6 +15,8 @@ class ClassInfoListener extends UnrealScriptBaseListener {
 
 	private UClass clazz;
 
+	private UClass struct = null;
+
 	// stateful processing
 	private boolean inState = false;
 
@@ -28,6 +28,7 @@ class ClassInfoListener extends UnrealScriptBaseListener {
 	@Override
 	public void enterClassdecl(UnrealScriptParser.ClassdeclContext ctx) {
 		clazz = new UClass(
+			UClass.UClassKind.CLASS,
 			sourceFile,
 			pkg,
 			ctx.classname().getText(),
@@ -48,6 +49,8 @@ class ClassInfoListener extends UnrealScriptBaseListener {
 		inState = false;
 	}
 
+	// FIXME add states and labels as members
+
 	@Override
 	public void enterVardecl(UnrealScriptParser.VardeclContext ctx) {
 		String type = null;
@@ -59,10 +62,16 @@ class ClassInfoListener extends UnrealScriptBaseListener {
 		else if (ctx.vartype().dynarraydecl() != null) {
 			if (ctx.vartype().dynarraydecl().basictype() != null) type = ctx.vartype().dynarraydecl().basictype().getText();
 			else if (ctx.vartype().dynarraydecl().classtype() != null) type = ctx.vartype().dynarraydecl().classtype().getText();
+			else if (ctx.vartype().dynarraydecl().packageidentifier() != null)
+				type = ctx.vartype().dynarraydecl().packageidentifier().classname().getText();
 		}
 
 		for (UnrealScriptParser.VaridentifierContext varItent : ctx.varidentifier()) {
-			clazz.addMember(UClass.UMember.UMemberKind.VARIABLE, type, varItent.getText());
+			if (struct != null) {
+				struct.addMember(UClass.UMember.UMemberKind.VARIABLE, type, varItent.getText());
+			} else {
+				clazz.addMember(UClass.UMember.UMemberKind.VARIABLE, type, varItent.getText());
+			}
 		}
 	}
 
@@ -78,11 +87,14 @@ class ClassInfoListener extends UnrealScriptBaseListener {
 
 	@Override
 	public void enterStructdecl(UnrealScriptParser.StructdeclContext ctx) {
+		struct = new UClass(UClass.UClassKind.STRUCT, null, pkg, ctx.identifier().getText(), clazz.name);
+		pkg.addClass(struct);
 		clazz.addMember(UClass.UMember.UMemberKind.STRUCT, null, ctx.identifier().getText());
 	}
 
 	@Override
 	public void enterEnumdecl(UnrealScriptParser.EnumdeclContext ctx) {
+		struct = null;
 		clazz.addMember(UClass.UMember.UMemberKind.ENUM, null, ctx.identifier().getText());
 	}
 }

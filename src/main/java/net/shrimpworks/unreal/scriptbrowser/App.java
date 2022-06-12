@@ -87,7 +87,9 @@ public class App {
 		Generator.offloadStatic("static.list", outPath);
 
 		System.err.println("Generating source pages");
-		sources.packages.values().forEach(pkg -> pkg.classes.values().parallelStream().forEach(e -> Generator.src(e, outPath)));
+		sources.packages.values().forEach(pkg -> pkg.classes.values().parallelStream()
+															.filter(c -> c.kind == UClass.UClassKind.CLASS)
+															.forEach(e -> Generator.src(e, outPath)));
 
 		System.err.println("Generating navigation tree");
 		Generator.tree(children(sources, null), outPath);

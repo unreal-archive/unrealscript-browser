@@ -1,5 +1,5 @@
 <#macro treenode node depth>
-	<div class="node" data-package="${node.clazz.pkg.name}" data-name="${node.clazz.name}">
+	<div class="node" data-package="${node.clazz.pkg.name?lower_case}" data-name="${node.clazz.name?lower_case}">
 		<#list 0..depth as d>
 			<#if d == depth && node.children?size gt 0>
 				<span class="pad plus">+</span>

@@ -25,7 +25,8 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	private final Map<String, String> locals = new HashMap<>(); // local, type
 	private boolean inFunction = false;
 	private boolean inStateLabel = false;
-	private Optional<UClass> pathType = Optional.empty();
+	private Optional<UClass> typePath = Optional.empty();
+	private Optional<String> structName = Optional.empty();
 
 	public ClassFormatterListener(UClass clazz, CommonTokenStream tokens) {
 		this.clazz = clazz;
@@ -118,7 +119,10 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		ctx.varparams().forEach(p -> tokenStyle(p, "kw"));
 		ctx.varidentifier().forEach(p -> {
 			tokenStyle(p, "var");
-			tokenAnchor(p, p.identifier().getText());
+			structName.ifPresentOrElse(
+				s -> tokenAnchor(p, String.format("%s_%s", s.toLowerCase(), p.identifier().getText())),
+				() -> tokenAnchor(p, p.identifier().getText())
+			);
 		});
 
 		if (ctx.vartype().packageidentifier() != null) linkClass(ctx.vartype().packageidentifier());
@@ -129,6 +133,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 //		else if (ctx.vartype().arraydecl() != null) type = ctx.vartype().arraydecl().identifier().getText();
 		else if (ctx.vartype().dynarraydecl() != null) {
 			if (ctx.vartype().dynarraydecl().classtype() != null) linkClass(ctx.vartype().dynarraydecl().classtype().packageidentifier());
+			if (ctx.vartype().dynarraydecl().packageidentifier() != null) linkClass(ctx.vartype().dynarraydecl().packageidentifier());
 		}
 	}
 
@@ -268,22 +273,22 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 
 		if (ctx.stop.getTokenIndex() + 1 < tokens.size()
 			&& (Objects.equals(after, ".") || Objects.equals(afterParent, "."))) {
-			pathType.flatMap(c -> c.variable(ctx.getText()))
+			typePath.flatMap(c -> c.variable(ctx.getText()))
 					.ifPresent(v -> memberLink(ctx, v));
 
-			pathType.ifPresentOrElse(
-				p -> pathType = p.variable(ctx.getText()).flatMap(v -> v.clazz.pkg.sourceSet.clazz(v.type)),
-				() -> pathType = Optional.ofNullable(locals.get(ctx.getText().toLowerCase()))
+			typePath.ifPresentOrElse(
+				p -> typePath = p.variable(ctx.getText()).flatMap(v -> v.clazz.pkg.sourceSet.clazz(v.type)),
+				() -> typePath = Optional.ofNullable(locals.get(ctx.getText().toLowerCase()))
 										 .flatMap(clazz.pkg.sourceSet::clazz)
 										 .or(() -> clazz.variable(ctx.getText())
 														.flatMap(v -> v.clazz.pkg.sourceSet.clazz(v.type)))
 			);
 		} else if (Objects.equals(before, ".")) {
 			// SomeVar.member
-			pathType.flatMap(c -> c.variable(ctx.getText()))
+			typePath.flatMap(c -> c.variable(ctx.getText()))
 					.ifPresent(v -> memberLink(ctx, v));
 
-			pathType = Optional.empty();
+			typePath = Optional.empty();
 		}
 	}
 
@@ -301,10 +306,17 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 
 	@Override
 	public void enterStructdecl(UnrealScriptParser.StructdeclContext ctx) {
+		structName = Optional.ofNullable(ctx.identifier().getText());
 		tokenStyle(ctx.STRUCT().getSymbol(), "kw");
 		tokenStyle(ctx.identifier(), "ident");
+		tokenAnchor(ctx.identifier(), ctx.identifier().getText());
 		if (ctx.EXTENDS() != null) tokenStyle(ctx.EXTENDS().getSymbol(), "kw");
 		ctx.structparams().forEach(p -> tokenStyle(p, "kw"));
+	}
+
+	@Override
+	public void exitStructdecl(UnrealScriptParser.StructdeclContext ctx) {
+		structName = Optional.empty();
 	}
 
 	@Override
@@ -345,20 +357,29 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		rewriter.insertAfter(ctx.stop, "«/a»");
 	}
 
-	private void memberLink(Token start, Token stop, UClass.UMember member) {
-		rewriter.insertBefore(start, String.format("«a href=\"../%s/%s.html#%s\"»",
-												   member.clazz.pkg.name, member.clazz.name, member.name.toLowerCase()));
-		rewriter.insertAfter(stop, "«/a»");
-	}
-
 	private void memberLink(ParserRuleContext ctx, UClass.UMember member) {
-		rewriter.insertBefore(ctx.start, String.format("«a href=\"../%s/%s.html#%s\"»",
-													   member.clazz.pkg.name, member.clazz.name, member.name.toLowerCase()));
+		if (member.name.equalsIgnoreCase("super")) return; // skip linking to super
+
+		if (member.clazz.kind == UClass.UClassKind.STRUCT) {
+			rewriter.insertBefore(ctx.start, String.format("«a href=\"../%s/%s.html#%s_%s\"»",
+														   member.clazz.pkg.name.toLowerCase(), member.clazz.parent.toLowerCase(),
+														   member.clazz.name.toLowerCase(), member.name.toLowerCase()));
+		} else {
+			rewriter.insertBefore(ctx.start, String.format("«a href=\"../%s/%s.html#%s\"»",
+														   member.clazz.pkg.name.toLowerCase(), member.clazz.name.toLowerCase(),
+														   member.name.toLowerCase()));
+		}
 		rewriter.insertAfter(ctx.stop, "«/a»");
 	}
 
 	private void classLink(ParserRuleContext ctx, UClass cls) {
-		rewriter.insertBefore(ctx.start, String.format("«a href=\"../%s/%s.html\"»", cls.pkg.name, cls.name));
+		if (cls.kind == UClass.UClassKind.STRUCT) {
+			rewriter.insertBefore(ctx.start, String.format("«a href=\"../%s/%s.html#%s\"»",
+														   cls.pkg.name.toLowerCase(), cls.parent.toLowerCase(), cls.name.toLowerCase()));
+		} else {
+			rewriter.insertBefore(ctx.start, String.format("«a href=\"../%s/%s.html\"»",
+														   cls.pkg.name.toLowerCase(), cls.name.toLowerCase()));
+		}
 		rewriter.insertAfter(ctx.stop, "«/a»");
 	}
 

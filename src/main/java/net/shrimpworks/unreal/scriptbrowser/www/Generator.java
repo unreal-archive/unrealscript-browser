@@ -85,7 +85,7 @@ public class Generator {
 
 	public static void src(UClass clazz, Path outPath) {
 		try (InputStream is = Files.newInputStream(clazz.path, StandardOpenOption.READ)) {
-			final Path htmlOut = outPath.resolve(clazz.pkg.name);
+			final Path htmlOut = outPath.resolve(clazz.pkg.name.toLowerCase());
 			try {
 				if (!Files.isDirectory(htmlOut)) Files.createDirectories(htmlOut);
 			} catch (IOException e) {
@@ -116,7 +116,7 @@ public class Generator {
 					});
 			try (Writer writer = Channels.newWriter(
 				Files.newByteChannel(
-					htmlOut.resolve(clazz.name + ".html"),
+					htmlOut.resolve(clazz.name.toLowerCase() + ".html"),
 					StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING
 				), StandardCharsets.UTF_8)) {
 				tpl.process(Map.of(

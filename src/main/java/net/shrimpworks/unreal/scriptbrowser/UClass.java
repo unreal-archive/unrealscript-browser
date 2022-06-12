@@ -8,6 +8,13 @@ import java.util.stream.Collectors;
 
 public class UClass implements Comparable<UClass> {
 
+	public static enum UClassKind {
+		CLASS,
+		STRUCT,
+		ENUM
+	}
+
+	public final UClassKind kind;
 	public final Path path;
 	public final UPackage pkg;
 	public final String name;
@@ -15,7 +22,8 @@ public class UClass implements Comparable<UClass> {
 	public final Set<String> params;
 	public final Set<UMember> members;
 
-	public UClass(Path path, UPackage pkg, String name, String parent) {
+	public UClass(UClassKind kind, Path path, UPackage pkg, String name, String parent) {
+		this.kind = kind;
 		this.path = path;
 		this.pkg = pkg;
 		this.name = name;
