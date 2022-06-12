@@ -129,7 +129,6 @@ public class Generator {
 		} catch (IOException | TemplateException e) {
 			throw new RuntimeException(e);
 		}
-
 	}
 
 	public static void offloadStatic(String resourceList, Path destination) throws IOException {

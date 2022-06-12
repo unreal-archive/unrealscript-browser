@@ -209,7 +209,8 @@ operatornames            : '~' | '!' | '@' | '#' | '$' | '%' | '^' | '&' | '*' |
                            '-=' | '*=' | '/=' | '&&' | '||' | '^^' | '==' | '**' |
                            '~=' | '@=' | '$=' | '>>>';
 
-functionargs             : ( OPTIONAL | OUT | COERCE | SKIP_ )* functionargtype identifier ('=' constvalue)*;
+functionargs             : ( functionargparams )* functionargtype identifier ('=' constvalue)*;
+functionargparams        : OPTIONAL | OUT | COERCE | SKIP_;
 functionargtype          : arraydecl | dynarraydecl | classtype | basictype | packageidentifier;
 functionbody             : ( localdecl )* ( statement )*;
 localdecl                : LOCAL localtype identifier arrayindex? ( ',' identifier arrayindex? )* ';';

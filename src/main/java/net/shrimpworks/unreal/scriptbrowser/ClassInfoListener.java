@@ -93,8 +93,13 @@ class ClassInfoListener extends UnrealScriptBaseListener {
 	}
 
 	@Override
-	public void enterEnumdecl(UnrealScriptParser.EnumdeclContext ctx) {
+	public void exitStructdecl(UnrealScriptParser.StructdeclContext ctx) {
 		struct = null;
+	}
+
+	@Override
+	public void enterEnumdecl(UnrealScriptParser.EnumdeclContext ctx) {
+		pkg.addClass(new UClass(UClass.UClassKind.ENUM, null, pkg, ctx.identifier().getText(), clazz.name));
 		clazz.addMember(UClass.UMember.UMemberKind.ENUM, null, ctx.identifier().getText());
 	}
 }

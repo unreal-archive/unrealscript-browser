@@ -126,12 +126,12 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		});
 
 		if (ctx.vartype().packageidentifier() != null) linkClass(ctx.vartype().packageidentifier());
-		else if (ctx.vartype().classtype() != null) linkClass(ctx.vartype().classtype().packageidentifier());
-			// FIXME link to all the other types here
-//		else if (ctx.vartype().basictype() != null) type = ctx.vartype().basictype().getText();
-//		else if (ctx.vartype().enumdecl() != null) type = ctx.vartype().enumdecl().identifier().getText();
-//		else if (ctx.vartype().arraydecl() != null) type = ctx.vartype().arraydecl().identifier().getText();
+		else if (ctx.vartype().classtype() != null) {
+			tokenStyle(ctx.vartype().classtype().CLASS().getSymbol(), "kw");
+			linkClass(ctx.vartype().classtype().packageidentifier());
+		}
 		else if (ctx.vartype().dynarraydecl() != null) {
+			tokenStyle(ctx.vartype().dynarraydecl().ARRAY().getSymbol(), "kw");
 			if (ctx.vartype().dynarraydecl().classtype() != null) linkClass(ctx.vartype().dynarraydecl().classtype().packageidentifier());
 			if (ctx.vartype().dynarraydecl().packageidentifier() != null) linkClass(ctx.vartype().dynarraydecl().packageidentifier());
 		}
@@ -157,15 +157,19 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 			type = ctx.localtype().packageidentifier().getText();
 			linkClass(ctx.localtype().packageidentifier());
 		} else if (ctx.localtype().classtype() != null) {
-			type = ctx.localtype().classtype().getText();
+			tokenStyle(ctx.localtype().classtype().CLASS().getSymbol(), "kw");
 			linkClass(ctx.localtype().packageidentifier());
-		}
-		// FIXME link to more types
-		else if (ctx.localtype().basictype() != null) type = ctx.localtype().basictype().getText();
-		else if (ctx.localtype().arraydecl() != null) type = ctx.localtype().arraydecl().identifier().getText();
+		} else if (ctx.localtype().basictype() != null) type = ctx.localtype().basictype().getText();
 		else if (ctx.localtype().dynarraydecl() != null) {
+			tokenStyle(ctx.localtype().dynarraydecl().ARRAY().getSymbol(), "kw");
 			if (ctx.localtype().dynarraydecl().basictype() != null) type = ctx.localtype().dynarraydecl().basictype().getText();
-			else if (ctx.localtype().dynarraydecl().classtype() != null) type = ctx.localtype().dynarraydecl().classtype().getText();
+			else if (ctx.localtype().dynarraydecl().classtype() != null) {
+				type = ctx.localtype().dynarraydecl().classtype().packageidentifier().getText();
+				linkClass(ctx.localtype().dynarraydecl().classtype().packageidentifier());
+			} else if (ctx.localtype().dynarraydecl().packageidentifier() != null) {
+				type = ctx.localtype().dynarraydecl().packageidentifier().getText();
+				linkClass(ctx.localtype().dynarraydecl().packageidentifier());
+			}
 		}
 		final String lolFinal = type;
 
@@ -182,21 +186,25 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 				type = a.functionargtype().packageidentifier().getText();
 				linkClass(a.functionargtype().packageidentifier());
 			} else if (a.functionargtype().classtype() != null) {
-				type = a.functionargtype().classtype().getText();
+				tokenStyle(a.functionargtype().classtype().CLASS().getSymbol(), "kw");
 				linkClass(a.functionargtype().classtype().packageidentifier());
-			}
-			// FIXME link to more types
-			else if (a.functionargtype().basictype() != null) type = a.functionargtype().basictype().getText();
-			else if (a.functionargtype().arraydecl() != null) type = a.functionargtype().arraydecl().identifier().getText();
+			} else if (a.functionargtype().basictype() != null) type = a.functionargtype().basictype().getText();
 			else if (a.functionargtype().dynarraydecl() != null) {
+				tokenStyle(a.functionargtype().dynarraydecl().ARRAY().getSymbol(), "kw");
 				if (a.functionargtype().dynarraydecl().basictype() != null) type = a.functionargtype().dynarraydecl().basictype().getText();
-				else if (a.functionargtype().dynarraydecl().classtype() != null)
-					type = a.functionargtype().dynarraydecl().classtype().getText();
+				else if (a.functionargtype().dynarraydecl().classtype() != null) {
+					type = a.functionargtype().dynarraydecl().classtype().packageidentifier().getText();
+					linkClass(a.functionargtype().dynarraydecl().classtype().packageidentifier());
+				} else if (a.functionargtype().dynarraydecl().packageidentifier() != null) {
+					type = a.functionargtype().dynarraydecl().packageidentifier().getText();
+					linkClass(a.functionargtype().dynarraydecl().packageidentifier());
+				}
 			}
 			final String lolFinal = type;
 
 			locals.put(a.identifier().getText().toLowerCase(), lolFinal);
 
+			a.functionargparams().forEach(p -> tokenStyle(p, "kw"));
 			tokenStyle(a.identifier(), "lcl");
 		});
 	}
@@ -296,6 +304,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	public void enterEnumdecl(UnrealScriptParser.EnumdeclContext ctx) {
 		tokenStyle(ctx.ENUM().getSymbol(), "kw");
 		tokenStyle(ctx.identifier(), "ident");
+		tokenAnchor(ctx.identifier(), ctx.identifier().getText());
 	}
 
 	@Override
@@ -373,7 +382,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	}
 
 	private void classLink(ParserRuleContext ctx, UClass cls) {
-		if (cls.kind == UClass.UClassKind.STRUCT) {
+		if (cls.kind == UClass.UClassKind.STRUCT || cls.kind == UClass.UClassKind.ENUM) {
 			rewriter.insertBefore(ctx.start, String.format("«a href=\"../%s/%s.html#%s\"»",
 														   cls.pkg.name.toLowerCase(), cls.parent.toLowerCase(), cls.name.toLowerCase()));
 		} else {
