@@ -157,13 +157,14 @@ dynarraydecl             : ARRAY '<' ( varparams )* (basictype | classtype | pac
 classtype                : CLASS ('<' packageidentifier '>')?;
 
 enumdecl                 : ENUM identifier '{' enumoptions '}';
-enumoptions              : enumoption ( ',' enumoption )* ','?;
-enumoption               : identifier;
+enumoptions              : ( enumoption )*;
+enumoption               : identifier ','?;
 
 structdecl               : STRUCT ( structparams )* identifier ( EXTENDS packageidentifier )?
                            '{' structbody '}';
 structparams             : ( NATIVE | EXPORT | CONSTRUCTIVE);
-structbody               : ( vardecl ';' )*;
+structbody               : ( structmember )*;
+structmember             : vardecl ';';
 
 
 // REPLICATION
@@ -202,7 +203,7 @@ unaryoperator            : ( PREOPERATOR | POSTOPERATOR ) localtype opidentifier
                            '(' functionargs ')' ;
 opidentifier             : identifier | operatornames;
 operatornames            : '~' | '!' | '@' | '#' | '$' | '%' | '^' | '&' | '*' |
-                           '-' | '=' | '+' | '|' | '\\' | ':' | '<' | '>' | '/' |
+                           '-' | '=' | '+' | '|' | '\\' | '<' | '>' | '/' |
                            '?' | '`' |
                            '<<' | '>>' | '!=' | '<=' | '>=' | '++' | '--' | '?-' | '+=' |
                            '-=' | '*=' | '/=' | '&&' | '||' | '^^' | '==' | '**' |
@@ -226,6 +227,7 @@ statement                : ';'
                          | foreachloop
                          | forloop
                          | returnstatement
+                         | statelabel              // NOTE: hack to support state labels in the middle of statements (see ScriptedPawn)
                          | expression ';';
 assertion                : ASSERT expression ';';
 ifstatement              : IF parExpression codeblock ( ELSE codeblock )?;
@@ -243,7 +245,7 @@ defaultrule              : DEFAULT ':' casecodeblock;
 preoperator              : '!' | '~' | '-' | '+' | '++' | '--' ;
 postoperator             : '++' | '--' ;
 operator                 : '~' | '!' | '@' | '#' | '$' | '%' | '^' | '&' | '*' |
-                           '-' | '+' | '|' | '\\' | ':' | '/' |
+                           '-' | '+' | '|' | '\\' | '/' |
                            '?' | '`' |
                            '<<' | '>>' | '++' | '--' | '?-' |
                            '-=' | '*=' | '/=' | '&&' | '||' | '^^'  | '**' |

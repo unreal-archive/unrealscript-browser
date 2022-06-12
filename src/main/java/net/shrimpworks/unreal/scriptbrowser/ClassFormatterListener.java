@@ -24,7 +24,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	// stateful processing
 	private final Map<String, String> locals = new HashMap<>(); // local, type
 	private boolean inFunction = false;
-	private boolean inState = false;
+	private boolean inStateLabel = false;
 	private Optional<UClass> pathType = Optional.empty();
 
 	public ClassFormatterListener(UClass clazz, CommonTokenStream tokens) {
@@ -123,7 +123,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 
 		if (ctx.vartype().packageidentifier() != null) linkClass(ctx.vartype().packageidentifier());
 		else if (ctx.vartype().classtype() != null) linkClass(ctx.vartype().classtype().packageidentifier());
-		// FIXME link to all the other types here
+			// FIXME link to all the other types here
 //		else if (ctx.vartype().basictype() != null) type = ctx.vartype().basictype().getText();
 //		else if (ctx.vartype().enumdecl() != null) type = ctx.vartype().enumdecl().identifier().getText();
 //		else if (ctx.vartype().arraydecl() != null) type = ctx.vartype().arraydecl().identifier().getText();
@@ -151,8 +151,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		if (ctx.localtype().packageidentifier() != null) {
 			type = ctx.localtype().packageidentifier().getText();
 			linkClass(ctx.localtype().packageidentifier());
-		}
-		else if (ctx.localtype().classtype() != null) {
+		} else if (ctx.localtype().classtype() != null) {
 			type = ctx.localtype().classtype().getText();
 			linkClass(ctx.localtype().packageidentifier());
 		}
@@ -177,8 +176,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 			if (a.functionargtype().packageidentifier() != null) {
 				type = a.functionargtype().packageidentifier().getText();
 				linkClass(a.functionargtype().packageidentifier());
-			}
-			else if (a.functionargtype().classtype() != null) {
+			} else if (a.functionargtype().classtype() != null) {
 				type = a.functionargtype().classtype().getText();
 				linkClass(a.functionargtype().classtype().packageidentifier());
 			}
@@ -210,34 +208,48 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	}
 
 	@Override
-	public void enterStatebody(UnrealScriptParser.StatebodyContext ctx) {
-		inState = true;
+	public void enterStatelabel(UnrealScriptParser.StatelabelContext ctx) {
+		inStateLabel = true;
 	}
 
 	@Override
-	public void exitStatebody(UnrealScriptParser.StatebodyContext ctx) {
-		inState = false;
+	public void exitStatelabel(UnrealScriptParser.StatelabelContext ctx) {
+		inStateLabel = false;
 	}
 
 	@Override
 	public void enterIdentifier(UnrealScriptParser.IdentifierContext ctx) {
-		if (!inFunction) return;
+		if (!inFunction && !inStateLabel) return;
 
-		// FIXME declare next/prev tokens first and reuse
-		// FIXME consume whitespace between tokens
+		int start = 1;
+		String before = tokens.get(ctx.start.getTokenIndex() - 1).getText();
+		while (before.isBlank() && ctx.start.getTokenIndex() - start > 0) {
+			before = tokens.get(ctx.start.getTokenIndex() - ++start).getText();
+		}
 
-		if (!Objects.equals(tokens.get(ctx.start.getTokenIndex() - 1).getText(), ".") && locals.containsKey(ctx.getText().toLowerCase())) {
+		int stop = 1;
+		String after = tokens.get(ctx.stop.getTokenIndex() + 1).getText();
+		while (after.isBlank() && ctx.stop.getTokenIndex() + stop < tokens.size() - 1) {
+			after = tokens.get(ctx.stop.getTokenIndex() + ++stop).getText();
+		}
+
+		stop = 1;
+		String afterParent = tokens.get(ctx.getParent().stop.getTokenIndex() + 1).getText();
+		while (afterParent.isBlank() && ctx.stop.getTokenIndex() + stop < tokens.size() - 1) {
+			afterParent = tokens.get(ctx.stop.getTokenIndex() + ++stop).getText();
+		}
+
+		if (!Objects.equals(before, ".") && locals.containsKey(ctx.getText().toLowerCase())) {
 			// local variable
 			tokenStyle(ctx, "lcl");
-		} else if (Objects.equals(tokens.get(ctx.stop.getTokenIndex() + 1).getText(), "(")
-				   || Objects.equals(tokens.get(ctx.getParent().stop.getTokenIndex() + 1).getText(), "(")
-		) {
+		} else if (Objects.equals(after, "(") || Objects.equals(afterParent, "(")) {
 			// function calls - note, super is found via member variable `Super` on UClass
-			if (Objects.equals(tokens.get(ctx.start.getTokenIndex() - 1).getText(), ".")) {
+			if (Objects.equals(before, ".")) {
 				// someVar.Thing()
-				Optional.ofNullable(locals.get(tokens.get(ctx.start.getTokenIndex() - 2).getText().toLowerCase()))
+				String prevToken = tokens.get(ctx.start.getTokenIndex() - start - 1).getText();
+				Optional.ofNullable(locals.get(prevToken.toLowerCase()))
 						.flatMap(clazz.pkg.sourceSet::clazz)
-						.or(() -> clazz.variable(tokens.get(ctx.start.getTokenIndex() - 2).getText())
+						.or(() -> clazz.variable(prevToken)
 									   .flatMap(v -> v.clazz.pkg.sourceSet.clazz(v.type)))
 						.flatMap(c -> c.function(ctx.getText()))
 						.ifPresent(f -> memberLink(ctx, f));
@@ -246,9 +258,8 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 				clazz.function(ctx.getText())
 					 .ifPresent(f -> memberLink(ctx, f));
 			}
-		} else if (!Objects.equals(tokens.get(ctx.start.getTokenIndex() - 1).getText(), ".")) {
+		} else if (!Objects.equals(before, ".")) {
 			// same (or inherited) class variable
-			// FIXME link to var
 			clazz.variable(ctx.getText()).ifPresent(v -> {
 				tokenStyle(ctx, "var");
 				memberLink(ctx, v);
@@ -256,8 +267,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		}
 
 		if (ctx.stop.getTokenIndex() + 1 < tokens.size()
-			&& (Objects.equals(tokens.get(ctx.stop.getTokenIndex() + 1).getText(), ".")
-				|| Objects.equals(tokens.get(ctx.getParent().stop.getTokenIndex() + 1).getText(), "."))) {
+			&& (Objects.equals(after, ".") || Objects.equals(afterParent, "."))) {
 			pathType.flatMap(c -> c.variable(ctx.getText()))
 					.ifPresent(v -> memberLink(ctx, v));
 
@@ -268,7 +278,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 										 .or(() -> clazz.variable(ctx.getText())
 														.flatMap(v -> v.clazz.pkg.sourceSet.clazz(v.type)))
 			);
-		} else if (Objects.equals(tokens.get(ctx.start.getTokenIndex() - 1).getText(), ".")) {
+		} else if (Objects.equals(before, ".")) {
 			// SomeVar.member
 			pathType.flatMap(c -> c.variable(ctx.getText()))
 					.ifPresent(v -> memberLink(ctx, v));
