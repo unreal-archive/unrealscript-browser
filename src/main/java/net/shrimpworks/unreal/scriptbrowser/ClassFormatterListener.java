@@ -145,6 +145,19 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		clazz.pkg.sourceSet.clazz(ctx.getText(), pkg).ifPresent(cls -> classLink(ctx, cls));
 	}
 
+//	FIXME use with  classval or objectval
+//	private void linkClass(Token token) {
+//		String[] parts = token.getText().split("\\.");
+//		UPackage pkg = null;
+//		if (parts.length == 2) pkg = clazz.pkg.sourceSet.pkg(parts[0]).orElse(null);
+//
+//		linkClass(token, parts[parts.length-1], pkg);
+//	}
+//
+//	private void linkClass(Token token, String clazz, UPackage pkg) {
+//		this.clazz.pkg.sourceSet.clazz(clazz, pkg).ifPresent(cls -> classLink(token, cls));
+//	}
+
 	@Override
 	public void enterLocaldecl(UnrealScriptParser.LocaldeclContext ctx) {
 		final ParserRuleContext type = localType(ctx.localtype());
@@ -256,21 +269,13 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		if (!Objects.equals(before, ".") && locals.containsKey(ctx.getText().toLowerCase())) {
 			// local variable
 			tokenStyle(ctx, "lcl");
-		} else if (Objects.equals(after, "(") || Objects.equals(afterParent, "(")) {
+		} else if (!inDefaultProps && (Objects.equals(after, "(") || Objects.equals(afterParent, "("))) {
 			// function calls - note, super is found via member variable `Super` on UClass
 			if (Objects.equals(before, ".")) {
 				// someVar.Thing()
-				// FIXME needs to interrogate typePath
-				typePath.flatMap(c -> c.variable(ctx.getText()))
-						.ifPresent(v -> memberLink(ctx, v));
+				typePath.flatMap(c -> c.function(ctx.getText()))
+						.ifPresent(f -> memberLink(ctx, f));
 				typePath = Optional.empty();
-//				String prevToken = tokens.get(ctx.start.getTokenIndex() - start - 1).getText();
-//				Optional.ofNullable(locals.get(prevToken.toLowerCase()))
-//						.flatMap(clazz.pkg.sourceSet::clazz)
-//						.or(() -> clazz.variable(prevToken)
-//									   .flatMap(v -> v.clazz.pkg.sourceSet.clazz(v.type)))
-//						.flatMap(c -> c.function(ctx.getText()))
-//						.ifPresent(f -> memberLink(ctx, f));
 			} else {
 				// same (or inherited) class function()
 				clazz.function(ctx.getText())
@@ -352,6 +357,8 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 
 	// FIXME states
 
+	// FIXME replication block
+
 	// FIXME defaultproperties
 
 	@Override
@@ -401,6 +408,19 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		}
 		rewriter.insertAfter(ctx.stop, "«/a»");
 	}
+
+// FIXME use with classval or objectval
+//	private void classLink(Token token, UClass cls) {
+//		if (token == null) return;
+//		if (cls.kind == UClass.UClassKind.STRUCT || cls.kind == UClass.UClassKind.ENUM) {
+//			rewriter.insertBefore(token, String.format("«a href=\"../%s/%s.html#%s\"»",
+//														   cls.pkg.name.toLowerCase(), cls.parent.toLowerCase(), cls.name.toLowerCase()));
+//		} else {
+//			rewriter.insertBefore(token, String.format("«a href=\"../%s/%s.html\"»",
+//														   cls.pkg.name.toLowerCase(), cls.name.toLowerCase()));
+//		}
+//		rewriter.insertAfter(token, "«/a»");
+//	}
 
 	private void tokenStyle(ParserRuleContext ctx, String style) {
 		if (ctx == null) return;
