@@ -66,11 +66,6 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	}
 
 	@Override
-	public void enterClassname(UnrealScriptParser.ClassnameContext ctx) {
-//		tokenStyle(ctx, "cls");
-	}
-
-	@Override
 	public void enterClassdecl(UnrealScriptParser.ClassdeclContext ctx) {
 		tokenStyle(ctx.CLASS().getSymbol(), "kw");
 		ctx.classparams().forEach(p -> tokenStyle(p, "kw"));
@@ -81,12 +76,6 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	@Override
 	public void enterFunctiontype(UnrealScriptParser.FunctiontypeContext ctx) {
 		tokenStyle(ctx, "kw");
-	}
-
-	@Override
-	public void enterBasictype(UnrealScriptParser.BasictypeContext ctx) {
-		// FIXME style to apply to all types?
-		tokenStyle(ctx, "typ");
 	}
 
 	@Override
@@ -133,23 +122,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 			);
 		});
 
-		if (ctx.vartype().packageidentifier() != null) {
-			tokenStyle(ctx.vartype().packageidentifier(), "typ");
-			linkClass(ctx.vartype().packageidentifier());
-		} else if (ctx.vartype().classtype() != null) {
-			tokenStyle(ctx.vartype().classtype().CLASS().getSymbol(), "kw");
-			tokenStyle(ctx.vartype().classtype().packageidentifier(), "typ");
-			linkClass(ctx.vartype().classtype().packageidentifier());
-		} else if (ctx.vartype().dynarraydecl() != null) {
-			tokenStyle(ctx.vartype().dynarraydecl().ARRAY().getSymbol(), "kw");
-			if (ctx.vartype().dynarraydecl().classtype() != null) {
-				tokenStyle(ctx.vartype().dynarraydecl().classtype().packageidentifier(), "typ");
-				linkClass(ctx.vartype().dynarraydecl().classtype().packageidentifier());
-			} else if (ctx.vartype().dynarraydecl().packageidentifier() != null) {
-				tokenStyle(ctx.vartype().dynarraydecl().packageidentifier(), "typ");
-				linkClass(ctx.vartype().dynarraydecl().packageidentifier());
-			}
-		}
+		if (ctx.vartype().localtype() != null) localType(ctx.vartype().localtype());
 	}
 
 	@Override
@@ -174,64 +147,52 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 
 	@Override
 	public void enterLocaldecl(UnrealScriptParser.LocaldeclContext ctx) {
+		final ParserRuleContext type = localType(ctx.localtype());
+
+		ctx.identifier().forEach(p -> locals.put(p.getText().toLowerCase(), type == null ? null : type.getText()));
+
+		tokenStyle(ctx.LOCAL().getSymbol(), "kw");
+	}
+
+	private ParserRuleContext localType(UnrealScriptParser.LocaltypeContext ctx) {
+		if (ctx == null) return null;
+
 		ParserRuleContext type = null;
-		if (ctx.localtype().packageidentifier() != null) {
-			type = ctx.localtype().packageidentifier();
-			linkClass(ctx.localtype().packageidentifier());
-		} else if (ctx.localtype().classtype() != null) {
-			tokenStyle(ctx.localtype().classtype().CLASS().getSymbol(), "kw");
-			linkClass(ctx.localtype().classtype().packageidentifier());
-		} else if (ctx.localtype().basictype() != null) type = ctx.localtype().basictype();
-		else if (ctx.localtype().dynarraydecl() != null) {
-			tokenStyle(ctx.localtype().dynarraydecl().ARRAY().getSymbol(), "kw");
-			if (ctx.localtype().dynarraydecl().basictype() != null) type = ctx.localtype().dynarraydecl().basictype();
-			else if (ctx.localtype().dynarraydecl().classtype() != null) {
-				type = ctx.localtype().dynarraydecl().classtype().packageidentifier();
-				linkClass(ctx.localtype().dynarraydecl().classtype().packageidentifier());
-			} else if (ctx.localtype().dynarraydecl().packageidentifier() != null) {
-				type = ctx.localtype().dynarraydecl().packageidentifier();
-				linkClass(ctx.localtype().dynarraydecl().packageidentifier());
+		if (ctx.packageidentifier() != null) {
+			type = ctx.packageidentifier();
+			linkClass(ctx.packageidentifier());
+		} else if (ctx.classtype() != null) {
+			tokenStyle(ctx.classtype().CLASS().getSymbol(), "kw");
+			tokenStyle(ctx.classtype().packageidentifier(), "typ");
+			linkClass(ctx.classtype().packageidentifier());
+		} else if (ctx.basictype() != null) type = ctx.basictype();
+		else if (ctx.dynarraydecl() != null) {
+			tokenStyle(ctx.dynarraydecl().ARRAY().getSymbol(), "kw");
+			if (ctx.dynarraydecl().basictype() != null) type = ctx.dynarraydecl().basictype();
+			else if (ctx.dynarraydecl().classtype() != null) {
+				type = ctx.dynarraydecl().classtype().packageidentifier();
+				linkClass(ctx.dynarraydecl().classtype().packageidentifier());
+			} else if (ctx.dynarraydecl().packageidentifier() != null) {
+				type = ctx.dynarraydecl().packageidentifier();
+				linkClass(ctx.dynarraydecl().packageidentifier());
 			}
 		}
-		final ParserRuleContext lolFinal = type;
-
-		ctx.identifier().forEach(p -> locals.put(p.getText().toLowerCase(), lolFinal == null ? null : lolFinal.getText()));
 
 		tokenStyle(type, "typ");
-		tokenStyle(ctx.LOCAL().getSymbol(), "kw");
+
+		return type;
 	}
 
 	@Override
 	public void enterNormalfunc(UnrealScriptParser.NormalfuncContext ctx) {
-		// FIXME highlighting/linking return types
-//		ctx.functiontype()
+		localType(ctx.localtype());
 
 		ctx.functionargs().forEach(a -> {
-			ParserRuleContext type = null;
-			if (a.functionargtype().packageidentifier() != null) {
-				type = a.functionargtype().packageidentifier();
-				linkClass(a.functionargtype().packageidentifier());
-			} else if (a.functionargtype().classtype() != null) {
-				tokenStyle(a.functionargtype().classtype().CLASS().getSymbol(), "kw");
-				linkClass(a.functionargtype().classtype().packageidentifier());
-			} else if (a.functionargtype().basictype() != null) type = a.functionargtype().basictype();
-			else if (a.functionargtype().dynarraydecl() != null) {
-				tokenStyle(a.functionargtype().dynarraydecl().ARRAY().getSymbol(), "kw");
-				if (a.functionargtype().dynarraydecl().basictype() != null) type = a.functionargtype().dynarraydecl().basictype();
-				else if (a.functionargtype().dynarraydecl().classtype() != null) {
-					type = a.functionargtype().dynarraydecl().classtype().packageidentifier();
-					linkClass(a.functionargtype().dynarraydecl().classtype().packageidentifier());
-				} else if (a.functionargtype().dynarraydecl().packageidentifier() != null) {
-					type = a.functionargtype().dynarraydecl().packageidentifier();
-					linkClass(a.functionargtype().dynarraydecl().packageidentifier());
-				}
-			}
-			final ParserRuleContext lolFinal = type;
+			ParserRuleContext type = localType(a.localtype());
 
-			locals.put(a.identifier().getText().toLowerCase(), lolFinal == null ? null : lolFinal.getText());
+			locals.put(a.identifier().getText().toLowerCase(), type == null ? null : type.getText());
 
 			a.functionargparams().forEach(p -> tokenStyle(p, "kw"));
-			tokenStyle(type, "typ");
 			tokenStyle(a.identifier(), "lcl");
 		});
 	}
@@ -299,6 +260,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 			// function calls - note, super is found via member variable `Super` on UClass
 			if (Objects.equals(before, ".")) {
 				// someVar.Thing()
+				// FIXME needs to interrogate typePath
 				String prevToken = tokens.get(ctx.start.getTokenIndex() - start - 1).getText();
 				Optional.ofNullable(locals.get(prevToken.toLowerCase()))
 						.flatMap(clazz.pkg.sourceSet::clazz)
@@ -386,6 +348,8 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	}
 
 	// FIXME states
+
+	// FIXME defaultproperties
 
 	@Override
 	public void enterStatement(UnrealScriptParser.StatementContext ctx) {

@@ -140,7 +140,6 @@ constdecl                : CONST identifier '=' expression;
 constvalue               : ( StringVal | NameVal | IntVal | FloatVal | BoolVal | NoneVal | classval | objectval | VectVal | keyvaluelist );
 classval                 : CLASS NameVal;
 objectval                : identifier NameVal;
-//enumval                  : identifier EnumVal;
 
 vardecl                  : VAR ( configgroup )? ( varparams )* vartype varidentifier arrayindex? ( ',' varidentifier arrayindex? )*;
 arrayindex               : ('[' expression ']');
@@ -148,7 +147,7 @@ varparams                : CONFIG | CONST | EDITCONST | EXPORT | GLOBALCONFIG | 
                            LOCALIZED | NATIVE | PRIVATE | PROTECTED | REPNOTIFY | TRANSIENT | TRAVEL |
                            EDITINLINE | DEPRECATED | EDFINDABLE | EDITINLINEUSE | EDITINLINENOTIFY;
 configgroup              : '(' ( identifier )? ')';
-vartype                  : arraydecl | dynarraydecl | enumdecl | structdecl | classtype | basictype | packageidentifier;
+vartype                  : localtype | enumdecl | structdecl;
 basictype                : BYTE | INT | FLOAT | STRING | BOOL | NAME | POINTER;
 varidentifier            : identifier;
 
@@ -209,9 +208,8 @@ operatornames            : '~' | '!' | '@' | '#' | '$' | '%' | '^' | '&' | '*' |
                            '-=' | '*=' | '/=' | '&&' | '||' | '^^' | '==' | '**' |
                            '~=' | '@=' | '$=' | '>>>';
 
-functionargs             : ( functionargparams )* functionargtype identifier ('=' constvalue)*;
+functionargs             : ( functionargparams )* localtype identifier ('=' constvalue)*;
 functionargparams        : OPTIONAL | OUT | COERCE | SKIP_;
-functionargtype          : arraydecl | dynarraydecl | classtype | basictype | packageidentifier;
 functionbody             : ( localdecl )* ( statement )*;
 localdecl                : LOCAL localtype identifier arrayindex? ( ',' identifier arrayindex? )* ';';
 localtype                : arraydecl | dynarraydecl | classtype | basictype | packageidentifier;

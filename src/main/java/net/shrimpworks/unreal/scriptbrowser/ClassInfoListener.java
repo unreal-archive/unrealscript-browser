@@ -49,8 +49,6 @@ class ClassInfoListener extends UnrealScriptBaseListener {
 		inState = false;
 	}
 
-	// FIXME add states and labels as members
-
 	@Override
 	public void enterStatedecl(UnrealScriptParser.StatedeclContext ctx) {
 		if (!inState) return;
@@ -60,23 +58,25 @@ class ClassInfoListener extends UnrealScriptBaseListener {
 	@Override
 	public void enterVardecl(UnrealScriptParser.VardeclContext ctx) {
 		String type = null;
-		if (ctx.vartype().packageidentifier() != null) type = ctx.vartype().packageidentifier().getText();
-		else if (ctx.vartype().classtype() != null) type = ctx.vartype().classtype().getText();
-		else if (ctx.vartype().basictype() != null) type = ctx.vartype().basictype().getText();
-		else if (ctx.vartype().enumdecl() != null) type = ctx.vartype().enumdecl().identifier().getText();
-		else if (ctx.vartype().arraydecl() != null) type = ctx.vartype().arraydecl().identifier().getText();
-		else if (ctx.vartype().dynarraydecl() != null) {
-			if (ctx.vartype().dynarraydecl().basictype() != null) type = ctx.vartype().dynarraydecl().basictype().getText();
-			else if (ctx.vartype().dynarraydecl().classtype() != null) type = ctx.vartype().dynarraydecl().classtype().getText();
-			else if (ctx.vartype().dynarraydecl().packageidentifier() != null)
-				type = ctx.vartype().dynarraydecl().packageidentifier().classname().getText();
-		}
+		if (ctx.vartype().localtype() != null) {
+			UnrealScriptParser.LocaltypeContext localtype = ctx.vartype().localtype();
+			if (localtype.packageidentifier() != null) type = localtype.packageidentifier().getText();
+			else if (localtype.classtype() != null) type = localtype.classtype().getText();
+			else if (localtype.basictype() != null) type = localtype.basictype().getText();
+			else if (localtype.arraydecl() != null) type = localtype.arraydecl().identifier().getText();
+			else if (localtype.dynarraydecl() != null) {
+				if (localtype.dynarraydecl().basictype() != null) type = localtype.dynarraydecl().basictype().getText();
+				else if (localtype.dynarraydecl().classtype() != null) type = localtype.dynarraydecl().classtype().getText();
+				else if (localtype.dynarraydecl().packageidentifier() != null)
+					type = localtype.dynarraydecl().packageidentifier().classname().getText();
+			}
+		} else if (ctx.vartype().enumdecl() != null) type = ctx.vartype().enumdecl().identifier().getText();
 
-		for (UnrealScriptParser.VaridentifierContext varItent : ctx.varidentifier()) {
+		for (UnrealScriptParser.VaridentifierContext varIdent : ctx.varidentifier()) {
 			if (struct != null) {
-				struct.addMember(UClass.UMember.UMemberKind.VARIABLE, type, varItent.getText());
+				struct.addMember(UClass.UMember.UMemberKind.VARIABLE, type, varIdent.getText());
 			} else {
-				clazz.addMember(UClass.UMember.UMemberKind.VARIABLE, type, varItent.getText());
+				clazz.addMember(UClass.UMember.UMemberKind.VARIABLE, type, varIdent.getText());
 			}
 		}
 	}
