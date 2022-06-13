@@ -38,6 +38,8 @@ public class App {
 	}
 
 	public static void main(String[] args) throws IOException {
+		final long startTime = System.currentTimeMillis();
+
 		CLI cli = CLI.parse(Map.of(), args);
 
 		Path srcPath = Paths.get(cli.commands()[0]);
@@ -45,9 +47,9 @@ public class App {
 
 		USources sources = new USources();
 
+		final AtomicInteger classCounter = new AtomicInteger(0);
 		try (Stream<Path> paths = Files.list(srcPath)) {
 			System.err.printf("Loading classes from %s%n", srcPath);
-			final AtomicInteger classCounter = new AtomicInteger(0);
 
 			paths.map(p -> {
 					 if (!Files.isDirectory(p)) return null;
@@ -80,9 +82,10 @@ public class App {
 				 .filter(Objects::nonNull)
 				 .filter(p -> !p.classes.isEmpty())
 				 .forEach(sources::addPackage);
-
-			System.err.printf("Loaded %d classes in %d packages%n", classCounter.get(), sources.packages.size());
 		}
+		final long loadedTime = System.currentTimeMillis();
+		System.err.printf("Loaded %d classes in %d packages in %dms%n", classCounter.get(), sources.packages.size(),
+						  loadedTime - startTime);
 
 		Generator.offloadStatic("static.list", outPath);
 
@@ -93,6 +96,8 @@ public class App {
 		sources.packages.values().forEach(pkg -> pkg.classes.values().parallelStream()
 															.filter(c -> c.kind == UClass.UClassKind.CLASS)
 															.forEach(e -> Generator.src(e, outPath)));
+		final long genTime = System.currentTimeMillis();
+		System.err.printf("Generated HTML in %dms%n", genTime - loadedTime);
 
 //		printTree(children(sources, null), 0);
 

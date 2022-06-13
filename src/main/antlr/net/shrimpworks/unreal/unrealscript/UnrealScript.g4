@@ -169,7 +169,8 @@ structmember             : vardecl ';';
 // REPLICATION
 replicationblock         : REPLICATION '{' ( replicationbody )* '}';
 replicationbody          : ( RELIABLE | UNRELIABLE ) IF '(' expression ')'
-                           identifier ( ',' identifier )* ';';
+                           replicationidentifiers ';';
+replicationidentifiers   : identifier ( ',' identifier )*;
 
 // BODY
 body                     : ( statedecl | functiondecl )+;

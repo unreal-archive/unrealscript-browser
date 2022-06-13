@@ -32,6 +32,7 @@ public class UClass implements Comparable<UClass> {
 		this.params = new HashSet<>();
 		this.members = new HashSet<>();
 		addMember(UMember.UMemberKind.VARIABLE, parent, "super");
+		addMember(UMember.UMemberKind.VARIABLE, name, "default");
 	}
 
 	public void addMember(UMember.UMemberKind kind, String type, String name) {

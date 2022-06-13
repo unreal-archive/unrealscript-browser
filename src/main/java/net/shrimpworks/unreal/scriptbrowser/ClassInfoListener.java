@@ -61,8 +61,11 @@ class ClassInfoListener extends UnrealScriptBaseListener {
 		if (ctx.vartype().localtype() != null) {
 			UnrealScriptParser.LocaltypeContext localtype = ctx.vartype().localtype();
 			if (localtype.packageidentifier() != null) type = localtype.packageidentifier().getText();
-			else if (localtype.classtype() != null) type = localtype.classtype().getText();
-			else if (localtype.basictype() != null) type = localtype.basictype().getText();
+			else if (localtype.classtype() != null) {
+				type = localtype.classtype().packageidentifier() != null
+					? localtype.classtype().packageidentifier().getText()
+					: localtype.classtype().getText();
+			} else if (localtype.basictype() != null) type = localtype.basictype().getText();
 			else if (localtype.arraydecl() != null) type = localtype.arraydecl().identifier().getText();
 			else if (localtype.dynarraydecl() != null) {
 				if (localtype.dynarraydecl().basictype() != null) type = localtype.dynarraydecl().basictype().getText();

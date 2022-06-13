@@ -35,6 +35,9 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		this.rewriter = new TokenStreamRewriter(tokens);
 	}
 
+	/**
+	 * Returns the rewritten content, with formatting applied, following a tree walk.
+	 */
 	public String getTranslatedText() {
 		return rewriter.getText();
 	}
@@ -84,14 +87,19 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		else if (ctx.FloatVal() != null) tokenStyle(ctx, "num");
 		else if (ctx.IntVal() != null) tokenStyle(ctx, "num");
 		else if (ctx.StringVal() != null) tokenStyle(ctx, "str");
-		else if (ctx.NameVal() != null) tokenStyle(ctx, "name");
-		else if (ctx.NoneVal() != null) tokenStyle(ctx, "none");
+		else if (ctx.NameVal() != null) {
+			tokenStyle(ctx, "name");
+			linkClass(ctx.NameVal().getSymbol());
+		} else if (ctx.NoneVal() != null) tokenStyle(ctx, "none");
 		else if (ctx.objectval() != null) {
 			// the object type will be highlighted/linked by as a classdecl
 			if (ctx.objectval().NameVal() != null) tokenStyle(ctx.objectval().NameVal().getSymbol(), "name");
 		} else if (ctx.classval() != null) {
 			tokenStyle(ctx.classval().CLASS().getSymbol(), "kw");
-			if (ctx.classval().NameVal() != null) tokenStyle(ctx.classval().NameVal().getSymbol(), "name");
+			if (ctx.classval().NameVal() != null) {
+				tokenStyle(ctx.classval().NameVal().getSymbol(), "name");
+				linkClass(ctx.classval().NameVal().getSymbol());
+			}
 		}
 	}
 
@@ -138,25 +146,26 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 			pkg = clazz.pkg.sourceSet.pkg(ctx.identifier().getText());
 		}
 
-		linkClass(ctx.classname().identifier(), pkg.orElse(null));
+		linkClass(ctx.classname().identifier(), pkg.orElse(clazz.pkg));
 	}
 
 	private void linkClass(UnrealScriptParser.IdentifierContext ctx, UPackage pkg) {
 		clazz.pkg.sourceSet.clazz(ctx.getText(), pkg).ifPresent(cls -> classLink(ctx, cls));
 	}
 
-//	FIXME use with  classval or objectval
-//	private void linkClass(Token token) {
-//		String[] parts = token.getText().split("\\.");
-//		UPackage pkg = null;
-//		if (parts.length == 2) pkg = clazz.pkg.sourceSet.pkg(parts[0]).orElse(null);
-//
-//		linkClass(token, parts[parts.length-1], pkg);
-//	}
-//
-//	private void linkClass(Token token, String clazz, UPackage pkg) {
-//		this.clazz.pkg.sourceSet.clazz(clazz, pkg).ifPresent(cls -> classLink(token, cls));
-//	}
+	private void linkClass(Token token) {
+		String[] parts = token.getText().replaceAll("'", "").split("\\.");
+		if (parts.length == 0) return;
+
+		UPackage pkg = null;
+		if (parts.length == 2) pkg = clazz.pkg.sourceSet.pkg(parts[0]).orElse(clazz.pkg);
+
+		linkClass(token, parts[parts.length - 1], pkg);
+	}
+
+	private void linkClass(Token token, String clazz, UPackage pkg) {
+		this.clazz.pkg.sourceSet.clazz(clazz, pkg).ifPresent(cls -> classLink(token, cls));
+	}
 
 	@Override
 	public void enterLocaldecl(UnrealScriptParser.LocaldeclContext ctx) {
@@ -234,6 +243,9 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	@Override
 	public void enterDefaultpropertiesblock(UnrealScriptParser.DefaultpropertiesblockContext ctx) {
 		inDefaultProps = true;
+		tokenStyle(ctx.DEFAULTPROPERTIES().getSymbol(), "defprops");
+		tokenStyle(ctx, "defaults");
+		tokenAnchor(ctx.DEFAULTPROPERTIES().getSymbol(), "default");
 	}
 
 	@Override
@@ -355,11 +367,23 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		tokenStyle(ctx.REPLICATION().getSymbol(), "kw");
 	}
 
+	@Override
+	public void enterReplicationbody(UnrealScriptParser.ReplicationbodyContext ctx) {
+		if (ctx.RELIABLE() != null) tokenStyle(ctx.RELIABLE().getSymbol(), "kw");
+		if (ctx.UNRELIABLE() != null) tokenStyle(ctx.UNRELIABLE().getSymbol(), "kw");
+		if (ctx.IF() != null) tokenStyle(ctx.IF().getSymbol(), "kw");
+	}
+
+	@Override
+	public void enterReplicationidentifiers(UnrealScriptParser.ReplicationidentifiersContext ctx) {
+		ctx.identifier().forEach(i -> {
+			tokenStyle(i, "var");
+			clazz.variable(i.getText())
+				 .ifPresent(v -> memberLink(i, v));
+		});
+	}
+
 	// FIXME states
-
-	// FIXME replication block
-
-	// FIXME defaultproperties
 
 	@Override
 	public void enterStatement(UnrealScriptParser.StatementContext ctx) {
@@ -373,6 +397,12 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		else if (ctx.switchstatement() != null) tokenStyle(ctx.switchstatement().SWITCH().getSymbol(), "kw");
 		else if (ctx.assertion() != null) tokenStyle(ctx.assertion().ASSERT().getSymbol(), "kw");
 		else if (ctx.returnstatement() != null) tokenStyle(ctx.returnstatement().RETURN().getSymbol(), "kw");
+	}
+
+	private void tokenAnchor(Token token, String name) {
+		if (token == null) return;
+		rewriter.insertBefore(token, "«a id=\"" + name.toLowerCase() + "\"»");
+		rewriter.insertAfter(token, "«/a»");
 	}
 
 	private void tokenAnchor(ParserRuleContext ctx, String name) {
@@ -409,18 +439,17 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		rewriter.insertAfter(ctx.stop, "«/a»");
 	}
 
-// FIXME use with classval or objectval
-//	private void classLink(Token token, UClass cls) {
-//		if (token == null) return;
-//		if (cls.kind == UClass.UClassKind.STRUCT || cls.kind == UClass.UClassKind.ENUM) {
-//			rewriter.insertBefore(token, String.format("«a href=\"../%s/%s.html#%s\"»",
-//														   cls.pkg.name.toLowerCase(), cls.parent.toLowerCase(), cls.name.toLowerCase()));
-//		} else {
-//			rewriter.insertBefore(token, String.format("«a href=\"../%s/%s.html\"»",
-//														   cls.pkg.name.toLowerCase(), cls.name.toLowerCase()));
-//		}
-//		rewriter.insertAfter(token, "«/a»");
-//	}
+	private void classLink(Token token, UClass cls) {
+		if (token == null) return;
+		if (cls.kind == UClass.UClassKind.STRUCT || cls.kind == UClass.UClassKind.ENUM) {
+			rewriter.insertBefore(token, String.format("«a href=\"../%s/%s.html#%s\"»",
+													   cls.pkg.name.toLowerCase(), cls.parent.toLowerCase(), cls.name.toLowerCase()));
+		} else {
+			rewriter.insertBefore(token, String.format("«a href=\"../%s/%s.html\"»",
+													   cls.pkg.name.toLowerCase(), cls.name.toLowerCase()));
+		}
+		rewriter.insertAfter(token, "«/a»");
+	}
 
 	private void tokenStyle(ParserRuleContext ctx, String style) {
 		if (ctx == null) return;
