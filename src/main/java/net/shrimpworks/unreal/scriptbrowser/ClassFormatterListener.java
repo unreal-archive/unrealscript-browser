@@ -261,13 +261,16 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 			if (Objects.equals(before, ".")) {
 				// someVar.Thing()
 				// FIXME needs to interrogate typePath
-				String prevToken = tokens.get(ctx.start.getTokenIndex() - start - 1).getText();
-				Optional.ofNullable(locals.get(prevToken.toLowerCase()))
-						.flatMap(clazz.pkg.sourceSet::clazz)
-						.or(() -> clazz.variable(prevToken)
-									   .flatMap(v -> v.clazz.pkg.sourceSet.clazz(v.type)))
-						.flatMap(c -> c.function(ctx.getText()))
-						.ifPresent(f -> memberLink(ctx, f));
+				typePath.flatMap(c -> c.variable(ctx.getText()))
+						.ifPresent(v -> memberLink(ctx, v));
+				typePath = Optional.empty();
+//				String prevToken = tokens.get(ctx.start.getTokenIndex() - start - 1).getText();
+//				Optional.ofNullable(locals.get(prevToken.toLowerCase()))
+//						.flatMap(clazz.pkg.sourceSet::clazz)
+//						.or(() -> clazz.variable(prevToken)
+//									   .flatMap(v -> v.clazz.pkg.sourceSet.clazz(v.type)))
+//						.flatMap(c -> c.function(ctx.getText()))
+//						.ifPresent(f -> memberLink(ctx, f));
 			} else {
 				// same (or inherited) class function()
 				clazz.function(ctx.getText())
