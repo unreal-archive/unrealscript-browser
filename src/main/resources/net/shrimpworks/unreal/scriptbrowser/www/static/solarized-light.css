@@ -7,7 +7,7 @@ header {
 	border-left: 50px solid #eee8d5;
 }
 
-nav {
+#nav, #tree-holder {
 	background-color: #eee8d5;
 }
 

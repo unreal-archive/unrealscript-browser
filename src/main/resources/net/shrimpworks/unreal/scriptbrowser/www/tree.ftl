@@ -17,16 +17,11 @@
 </head>
 
 <body>
-	<div id="page">
-		<nav>
-			<section id="search">
-				<input type="text" id="filter" placeholder="filter"/>
-			</section>
-			<section id="tree"></section>
-		</nav>
-
-		<header><h1 id="header"></h1></header>
-		<iframe id="source"></iframe>
+	<div id="tree-holder">
+		<section id="search">
+			<input type="text" id="filter" placeholder="filter"/>
+		</section>
+		<section id="tree"></section>
 	</div>
 </body>
 
@@ -39,10 +34,18 @@
 <#noparse>
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-	  const header = document.getElementById("header")
 	  const tree = document.getElementById("tree")
-	  const source = document.getElementById("source")
 	  const filter = document.getElementById("filter")
+	  let port2
+
+		// establish comms with the index page
+	  window.addEventListener('message', (e) => {
+		  port2 = e.ports[0]
+
+		  port2.onmessage = (m) => {
+			  console.log(m.data)
+		  }
+	  })
 
 		function initTree() {
 			while (tree.firstChild) {
@@ -61,9 +64,10 @@
 			pad.classList.add("pad")
 			if (node.children.length) {
 				pad.classList.add("plus")
-		  	pad.textContent = "+";
+		  	pad.textContent = "+"
 		  	pad.addEventListener("click", () => {
 			  	kids.classList.toggle("open")
+					pad.textContent = kids.classList.contains("open") ? "-" : "+"
 				})
 	  	}
 			div.appendChild(pad);
@@ -71,9 +75,7 @@
 			const link =  document.createElement('a');
 			link.id = `${node.pkg}.${node.clazz}`
 			link.textContent = node.clazz
-			link.addEventListener("click", () => {
-				source.src = node.pkg.toLowerCase() + "/" + node.clazz.toLowerCase() + ".html"
-			})
+			link.addEventListener("click", () => openClassNode(node))
 			div.appendChild(link)
 
 			if (node.children) {
@@ -104,9 +106,7 @@
 				const link = document.createElement('a');
 				link.id = `${node.pkg}.${node.clazz}`
 				link.textContent = node.clazz
-				link.addEventListener("click", () => {
-					source.src = node.pkg.toLowerCase() + "/" + node.clazz.toLowerCase() + ".html"
-				})
+				link.addEventListener("click", () => openClassNode(node))
 				div.appendChild(link)
 				parent.appendChild(div);
 			}
@@ -114,26 +114,16 @@
 		  if (node.children) node.children.forEach(n => filterNode(parent, n, filterString))
 		}
 
+		function openClassNode(node) {
+			port2.postMessage({
+				"event": "nav",
+				"url": node.pkg.toLowerCase() + "/" + node.clazz.toLowerCase() + ".html"
+			});
+		}
+
 		initTree()
 
-		source.addEventListener("load", () => {
-			const channel = new MessageChannel()
-			const port1 = channel.port1
-
-			port1.onmessage = (m) => {
-				switch (m.data.event) {
-					case "loaded":
-						header.innerHTML = m.data.pkg + " / " + m.data.clazz
-						break
-					default:
-						console.log("unknown message event ", m.data.type, m.data)
-		  	}
-			}
-
-			source.contentWindow.postMessage('hello frame', '*', [channel.port2])
-		})
-
-	  filter.addEventListener("keyup", (e) => {
+	  filter.addEventListener("keyup", () => {
 			filterNodes(filter.value)
 		})
   })

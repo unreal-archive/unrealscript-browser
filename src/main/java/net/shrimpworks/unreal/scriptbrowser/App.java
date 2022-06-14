@@ -87,7 +87,9 @@ public class App {
 		System.err.printf("Loaded %d classes in %d packages in %dms%n", classCounter.get(), sources.packages.size(),
 						  loadedTime - startTime);
 
+		System.err.println("Generating index page");
 		Generator.offloadStatic("static.list", outPath);
+		Generator.index(outPath);
 
 		System.err.println("Generating navigation tree");
 		Generator.tree(children(sources, null), outPath);

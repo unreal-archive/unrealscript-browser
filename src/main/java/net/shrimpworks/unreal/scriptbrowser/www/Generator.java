@@ -66,6 +66,21 @@ public class Generator {
 		TPL_CONFIG.setOutputFormat(HTMLOutputFormat.INSTANCE);
 	}
 
+	public static void index(Path outPath) {
+		try {
+			Template tpl = TPL_CONFIG.getTemplate("index.ftl");
+			try (Writer writer = Channels.newWriter(
+				Files.newByteChannel(
+					outPath.resolve("index.html"),
+					StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING
+				), StandardCharsets.UTF_8)) {
+				tpl.process(Map.of(), writer);
+			}
+		} catch (IOException | TemplateException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public static void tree(Collection<UClassNode> nodes, Path outPath) {
 		try {
 			Template tpl = TPL_CONFIG.getTemplate("tree.ftl");

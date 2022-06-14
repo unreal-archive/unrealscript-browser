@@ -17,11 +17,19 @@ body {
 	height: 100vh;
 }
 
-nav {
+#nav {
 	grid-area: nav;
+	height: 100%;
+	width: 100%;
+	border: none;
+}
+
+#tree-holder {
 	display: grid;
 	grid-template: "search"
 	               "tree";
+	height: 100vh;
+
 	grid-template-rows: 40px 1fr;
 
 	box-shadow: -10px 0 10px -7px rgba(0,0,0,0.5) inset;
