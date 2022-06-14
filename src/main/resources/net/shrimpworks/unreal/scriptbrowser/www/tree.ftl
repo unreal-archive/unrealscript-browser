@@ -18,10 +18,14 @@
 
 <body>
 	<div id="page">
+		<nav>
+			<section id="search">
+				<input type="text" id="filter" placeholder="filter"/>
+			</section>
+			<section id="tree"></section>
+		</nav>
+
 		<header><h1 id="header"></h1></header>
-
-		<section id="tree"></section>
-
 		<iframe id="source"></iframe>
 	</div>
 </body>
@@ -38,6 +42,14 @@
 	  const header = document.getElementById("header")
 	  const tree = document.getElementById("tree")
 	  const source = document.getElementById("source")
+	  const filter = document.getElementById("filter")
+
+		function initTree() {
+			while (tree.firstChild) {
+		  	tree.removeChild(tree.lastChild);
+			}
+			nodes.forEach(n => tree.appendChild(treeNode(n, 0)))
+		}
 
 	  function treeNode(node, depth) {
 			const div = document.createElement('div');
@@ -45,25 +57,22 @@
 
 			const kids = document.createElement('div');
 
-			for (let i = 0; i <= depth; i++) {
-				const pad = document.createElement('span');
-				pad.classList.add("pad");
-				if (i === depth && node.children.length) {
-					pad.classList.add("plus");
-					pad.textContent = "+";
-
-					pad.addEventListener("click", () => {
-						kids.classList.toggle("open")
-					})
-				}
-				div.appendChild(pad);
-			}
+			const pad = document.createElement('span')
+			pad.classList.add("pad")
+			if (node.children.length) {
+				pad.classList.add("plus")
+		  	pad.textContent = "+";
+		  	pad.addEventListener("click", () => {
+			  	kids.classList.toggle("open")
+				})
+	  	}
+			div.appendChild(pad);
 
 			const link =  document.createElement('a');
 			link.id = `${node.pkg}.${node.clazz}`
 			link.textContent = node.clazz
 			link.addEventListener("click", () => {
-				source.src = node.pkg.toLowerCase() + "/" + node.clazz.toLowerCase() + ".html";
+				source.src = node.pkg.toLowerCase() + "/" + node.clazz.toLowerCase() + ".html"
 			})
 			div.appendChild(link)
 
@@ -77,23 +86,55 @@
 			return div;
 		}
 
-	  nodes.forEach(n => tree.appendChild(treeNode(n, 0)));
+		function filterNodes(filterString) {
+		  if (filterString.length === 0) return initTree()
+		  if (filterString.length < 3) return
+
+			while (tree.firstChild) {
+				tree.removeChild(tree.lastChild);
+			}
+
+			nodes.forEach(n => filterNode(tree, n, filterString))
+		}
+
+		function filterNode(parent, node, filterString) {
+		  if (node.clazz.toLowerCase().includes(filterString.toLowerCase())) {
+				const div = document.createElement('div');
+				div.classList.add("node");
+				const link = document.createElement('a');
+				link.id = `${node.pkg}.${node.clazz}`
+				link.textContent = node.clazz
+				link.addEventListener("click", () => {
+					source.src = node.pkg.toLowerCase() + "/" + node.clazz.toLowerCase() + ".html"
+				})
+				div.appendChild(link)
+				parent.appendChild(div);
+			}
+
+		  if (node.children) node.children.forEach(n => filterNode(parent, n, filterString))
+		}
+
+		initTree()
 
 		source.addEventListener("load", () => {
-			const channel = new MessageChannel();
-			const port1 = channel.port1;
+			const channel = new MessageChannel()
+			const port1 = channel.port1
 
 			port1.onmessage = (m) => {
 				switch (m.data.event) {
 					case "loaded":
 						header.innerHTML = m.data.pkg + " / " + m.data.clazz
-						break;
+						break
 					default:
 						console.log("unknown message event ", m.data.type, m.data)
 		  	}
 			}
 
-			source.contentWindow.postMessage('hello frame', '*', [channel.port2]);
+			source.contentWindow.postMessage('hello frame', '*', [channel.port2])
+		})
+
+	  filter.addEventListener("keyup", (e) => {
+			filterNodes(filter.value)
 		})
   })
 </script>
