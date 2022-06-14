@@ -10,6 +10,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStreamRewriter;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import net.shrimpworks.unreal.unrealscript.UnrealScriptBaseListener;
 import net.shrimpworks.unreal.unrealscript.UnrealScriptParser;
@@ -70,10 +71,12 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 
 	@Override
 	public void enterClassdecl(UnrealScriptParser.ClassdeclContext ctx) {
-		tokenStyle(ctx.CLASS().getSymbol(), "kw");
+		tokenStyle(ctx.CLASS(), "kw");
+		tokenStyle(ctx.classname(), "cls");
+		tokenStyle(ctx.parentclass(), "cls");
 		ctx.classparams().forEach(p -> tokenStyle(p, "kw"));
-		if (ctx.EXPANDS() != null) tokenStyle(ctx.EXPANDS().getSymbol(), "kw");
-		if (ctx.EXTENDS() != null) tokenStyle(ctx.EXTENDS().getSymbol(), "kw");
+		tokenStyle(ctx.EXPANDS(), "kw");
+		tokenStyle(ctx.EXTENDS(), "kw");
 	}
 
 	@Override
@@ -93,11 +96,11 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		} else if (ctx.NoneVal() != null) tokenStyle(ctx, "none");
 		else if (ctx.objectval() != null) {
 			// the object type will be highlighted/linked by as a classdecl
-			if (ctx.objectval().NameVal() != null) tokenStyle(ctx.objectval().NameVal().getSymbol(), "name");
+			tokenStyle(ctx.objectval().NameVal(), "name");
 		} else if (ctx.classval() != null) {
-			tokenStyle(ctx.classval().CLASS().getSymbol(), "kw");
+			tokenStyle(ctx.classval().CLASS(), "kw");
 			if (ctx.classval().NameVal() != null) {
-				tokenStyle(ctx.classval().NameVal().getSymbol(), "name");
+				tokenStyle(ctx.classval().NameVal(), "name");
 				linkClass(ctx.classval().NameVal().getSymbol());
 			}
 		}
@@ -120,7 +123,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 
 	@Override
 	public void enterVardecl(UnrealScriptParser.VardeclContext ctx) {
-		tokenStyle(ctx.VAR().getSymbol(), "kw");
+		tokenStyle(ctx.VAR(), "kw");
 		ctx.varparams().forEach(p -> tokenStyle(p, "kw"));
 		ctx.varidentifier().forEach(p -> {
 			tokenStyle(p, "var");
@@ -173,7 +176,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 
 		ctx.identifier().forEach(p -> locals.put(p.getText().toLowerCase(), type == null ? null : type.getText()));
 
-		tokenStyle(ctx.LOCAL().getSymbol(), "kw");
+		tokenStyle(ctx.LOCAL(), "kw");
 	}
 
 	private ParserRuleContext localType(UnrealScriptParser.LocaltypeContext ctx) {
@@ -184,12 +187,12 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 			type = ctx.packageidentifier();
 			linkClass(ctx.packageidentifier());
 		} else if (ctx.classtype() != null) {
-			tokenStyle(ctx.classtype().CLASS().getSymbol(), "kw");
+			tokenStyle(ctx.classtype().CLASS(), "kw");
 			tokenStyle(ctx.classtype().packageidentifier(), "typ");
 			linkClass(ctx.classtype().packageidentifier());
 		} else if (ctx.basictype() != null) type = ctx.basictype();
 		else if (ctx.dynarraydecl() != null) {
-			tokenStyle(ctx.dynarraydecl().ARRAY().getSymbol(), "kw");
+			tokenStyle(ctx.dynarraydecl().ARRAY(), "kw");
 			if (ctx.dynarraydecl().basictype() != null) type = ctx.dynarraydecl().basictype();
 			else if (ctx.dynarraydecl().classtype() != null) {
 				type = ctx.dynarraydecl().classtype().packageidentifier();
@@ -243,7 +246,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	@Override
 	public void enterDefaultpropertiesblock(UnrealScriptParser.DefaultpropertiesblockContext ctx) {
 		inDefaultProps = true;
-		tokenStyle(ctx.DEFAULTPROPERTIES().getSymbol(), "defprops");
+		tokenStyle(ctx.DEFAULTPROPERTIES(), "defprops");
 		tokenStyle(ctx, "defaults");
 		tokenAnchor(ctx.DEFAULTPROPERTIES().getSymbol(), "default");
 	}
@@ -324,24 +327,24 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 
 	@Override
 	public void enterEnumdecl(UnrealScriptParser.EnumdeclContext ctx) {
-		tokenStyle(ctx.ENUM().getSymbol(), "kw");
+		tokenStyle(ctx.ENUM(), "kw");
 		tokenStyle(ctx.identifier(), "ident");
 		tokenAnchor(ctx.identifier(), ctx.identifier().getText());
 	}
 
 	@Override
 	public void enterConstdecl(UnrealScriptParser.ConstdeclContext ctx) {
-		tokenStyle(ctx.CONST().getSymbol(), "kw");
+		tokenStyle(ctx.CONST(), "kw");
 		tokenStyle(ctx.identifier(), "ident");
 	}
 
 	@Override
 	public void enterStructdecl(UnrealScriptParser.StructdeclContext ctx) {
 		structName = Optional.ofNullable(ctx.identifier().getText());
-		tokenStyle(ctx.STRUCT().getSymbol(), "kw");
+		tokenStyle(ctx.STRUCT(), "kw");
 		tokenStyle(ctx.identifier(), "ident");
 		tokenAnchor(ctx.identifier(), ctx.identifier().getText());
-		if (ctx.EXTENDS() != null) tokenStyle(ctx.EXTENDS().getSymbol(), "kw");
+		tokenStyle(ctx.EXTENDS(), "kw");
 		ctx.structparams().forEach(p -> tokenStyle(p, "kw"));
 	}
 
@@ -358,20 +361,36 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 			ctx.normalfunc().functionparams().forEach(p -> tokenStyle(p, "kw"));
 		} else if (ctx.operatorfunc() != null) {
 			ctx.operatorfunc().functionparams().forEach(p -> tokenStyle(p, "kw"));
-			tokenStyle(ctx.operatorfunc().operatortype(), "kw");
+
+			UnrealScriptParser.BinaryoperatorContext binaryoperator = ctx.operatorfunc().operatortype().binaryoperator();
+			UnrealScriptParser.UnaryoperatorContext unaryoperator = ctx.operatorfunc().operatortype().unaryoperator();
+
+			if (binaryoperator != null) {
+				tokenStyle(binaryoperator.OPERATOR(), "kw");
+				tokenStyle(binaryoperator.opidentifier(), "op");
+				localType(binaryoperator.localtype());
+				binaryoperator.functionargs().forEach(f -> localType(f.localtype()));
+			}
+			if (unaryoperator != null) {
+				tokenStyle(unaryoperator.PREOPERATOR(), "kw");
+				tokenStyle(unaryoperator.POSTOPERATOR(), "kw");
+				tokenStyle(unaryoperator.opidentifier(), "op");
+				localType(unaryoperator.localtype());
+				localType(unaryoperator.functionargs().localtype());
+			}
 		}
 	}
 
 	@Override
 	public void enterReplicationblock(UnrealScriptParser.ReplicationblockContext ctx) {
-		tokenStyle(ctx.REPLICATION().getSymbol(), "kw");
+		tokenStyle(ctx.REPLICATION(), "kw");
 	}
 
 	@Override
 	public void enterReplicationbody(UnrealScriptParser.ReplicationbodyContext ctx) {
-		if (ctx.RELIABLE() != null) tokenStyle(ctx.RELIABLE().getSymbol(), "kw");
-		if (ctx.UNRELIABLE() != null) tokenStyle(ctx.UNRELIABLE().getSymbol(), "kw");
-		if (ctx.IF() != null) tokenStyle(ctx.IF().getSymbol(), "kw");
+		tokenStyle(ctx.RELIABLE(), "kw");
+		tokenStyle(ctx.UNRELIABLE(), "kw");
+		tokenStyle(ctx.IF(), "kw");
 	}
 
 	@Override
@@ -383,20 +402,26 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		});
 	}
 
-	// FIXME states
+	@Override
+	public void enterStatedecl(UnrealScriptParser.StatedeclContext ctx) {
+		ctx.stateparams().forEach(p -> tokenStyle(p, "kw"));
+		tokenStyle(ctx.STATE(), "kw");
+		tokenStyle(ctx.EXTENDS(), "kw");
+		ctx.identifier().forEach(i -> tokenStyle(i, "cls"));
+	}
 
 	@Override
 	public void enterStatement(UnrealScriptParser.StatementContext ctx) {
 		if (ctx.ifstatement() != null) {
-			tokenStyle(ctx.ifstatement().IF().getSymbol(), "kw");
-			if (ctx.ifstatement().ELSE() != null) tokenStyle(ctx.ifstatement().ELSE().getSymbol(), "kw");
-		} else if (ctx.whileloop() != null) tokenStyle(ctx.whileloop().WHILE().getSymbol(), "kw");
-		else if (ctx.doloop() != null) tokenStyle(ctx.doloop().DO().getSymbol(), "kw");
-		else if (ctx.forloop() != null) tokenStyle(ctx.forloop().FOR().getSymbol(), "kw");
-		else if (ctx.foreachloop() != null) tokenStyle(ctx.foreachloop().FOREACH().getSymbol(), "kw");
-		else if (ctx.switchstatement() != null) tokenStyle(ctx.switchstatement().SWITCH().getSymbol(), "kw");
-		else if (ctx.assertion() != null) tokenStyle(ctx.assertion().ASSERT().getSymbol(), "kw");
-		else if (ctx.returnstatement() != null) tokenStyle(ctx.returnstatement().RETURN().getSymbol(), "kw");
+			tokenStyle(ctx.ifstatement().IF(), "kw");
+			tokenStyle(ctx.ifstatement().ELSE(), "kw");
+		} else if (ctx.whileloop() != null) tokenStyle(ctx.whileloop().WHILE(), "kw");
+		else if (ctx.doloop() != null) tokenStyle(ctx.doloop().DO(), "kw");
+		else if (ctx.forloop() != null) tokenStyle(ctx.forloop().FOR(), "kw");
+		else if (ctx.foreachloop() != null) tokenStyle(ctx.foreachloop().FOREACH(), "kw");
+		else if (ctx.switchstatement() != null) tokenStyle(ctx.switchstatement().SWITCH(), "kw");
+		else if (ctx.assertion() != null) tokenStyle(ctx.assertion().ASSERT(), "kw");
+		else if (ctx.returnstatement() != null) tokenStyle(ctx.returnstatement().RETURN(), "kw");
 	}
 
 	private void tokenAnchor(Token token, String name) {
@@ -455,6 +480,11 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		if (ctx == null) return;
 		rewriter.insertBefore(ctx.start, "«span class=\"" + style + "\"»");
 		rewriter.insertAfter(ctx.stop, "«/span»");
+	}
+
+	private void tokenStyle(TerminalNode node, String style) {
+		if (node == null) return;
+		tokenStyle(node.getSymbol(), style);
 	}
 
 	private void tokenStyle(Token token, String style) {
