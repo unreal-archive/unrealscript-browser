@@ -9,20 +9,63 @@
 
 <body>
 <div id="page">
-	<iframe id="nav" src="ut99/tree.html"></iframe>
+	<div id="controls">
+		<ul>
+			<li id="menu-home"><img src="static/icons/home.svg"/> Home</li>
+			<li><img src="static/icons/file-code.svg"/> Sources
+				<ul id="menu-sources" class="dropdown"></ul>
+			</li>
+			<li><img src="static/icons/palette.svg"/> Style
+				<ul id="menu-styles" class="dropdown">
+					<li data-name="solarized-light">Solarized Light</li>
+					<li data-name="solarized-dark">Solarized Dark</li>
+					<li data-name="unrealed">UnrealEd</li>
+				</ul>
+			</li>
+			<li id="menu-target"><img src="static/icons/target.svg"/> Goto</li>
+		</ul>
+	</div>
+
+	<iframe id="left"></iframe>
 
 	<header><h1 id="header"></h1></header>
 
-	<iframe id="source"></iframe>
+	<iframe id="right"></iframe>
 </div>
 </body>
+
+<script>
+	const sources = [
+	  <#list sources as src>
+	  	{
+			  "name": "${src.name}",
+				"path": "${src.outPath}",
+			},
+	  </#list>
+  ]
+</script>
 
 <#noparse>
 <script>
 	document.addEventListener("DOMContentLoaded", () => {
 		const header = document.getElementById("header")
-		const nav = document.getElementById("nav")
-		const source = document.getElementById("source")
+		const nav = document.getElementById("left")
+		const source = document.getElementById("right")
+
+		function sourcesMenu() {
+			const menu = document.getElementById("menu-sources")
+			sources.forEach(s => {
+				const item = document.createElement('li')
+				item.textContent = s.name
+				item.addEventListener("click", () => {
+					nav.src = s.path + "/tree.html"
+					source.src = s.path + "/index.html"
+				})
+				menu.appendChild(item)
+			})
+		}
+
+		sourcesMenu()
 
 		// establish comms with the navigation tree, so it can tell us what to put into the source area
 		nav.addEventListener("load", () => {

@@ -15,6 +15,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -31,6 +32,7 @@ import net.shrimpworks.unreal.scriptbrowser.App;
 import net.shrimpworks.unreal.scriptbrowser.ClassFormatterListener;
 import net.shrimpworks.unreal.scriptbrowser.UClass;
 import net.shrimpworks.unreal.scriptbrowser.UClassNode;
+import net.shrimpworks.unreal.scriptbrowser.USources;
 import net.shrimpworks.unreal.unrealscript.UnrealScriptLexer;
 import net.shrimpworks.unreal.unrealscript.UnrealScriptParser;
 
@@ -66,7 +68,7 @@ public class Generator {
 		TPL_CONFIG.setOutputFormat(HTMLOutputFormat.INSTANCE);
 	}
 
-	public static void index(Path outPath) {
+	public static void index(List<USources> sources, Path outPath) {
 		try {
 			Template tpl = TPL_CONFIG.getTemplate("index.ftl");
 			try (Writer writer = Channels.newWriter(
@@ -74,7 +76,10 @@ public class Generator {
 					outPath.resolve("index.html"),
 					StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING
 				), StandardCharsets.UTF_8)) {
-				tpl.process(Map.of(), writer);
+				tpl.process(
+					Map.of("sources", sources),
+					writer
+				);
 			}
 		} catch (IOException | TemplateException e) {
 			throw new RuntimeException(e);

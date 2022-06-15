@@ -1,4 +1,4 @@
-#source {
+#right {
 	background-color: #fdf6e3;
 }
 
@@ -7,7 +7,12 @@ header {
 	border-left: 50px solid #eee8d5;
 }
 
-#nav, #tree-holder {
+
+#controls, #controls ul li ul {
+	background-color: #eee8d5;
+}
+
+#left, #tree-holder {
 	background-color: #eee8d5;
 }
 
@@ -22,7 +27,7 @@ header {
 
 #search input:focus {
 	background-color: white;
-	outline: none;
+	outline: grey;
 }
 
 #script pre a[href] {

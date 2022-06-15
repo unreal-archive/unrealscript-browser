@@ -4,12 +4,14 @@ body {
 	text-rendering: optimizeLegibility;
 }
 
-/* Index layout */
+/*****************************
+ *	Index layout
+ */
 
 #page {
 	display: grid;
-	grid-template: "nav header"
-	               "nav source";
+	grid-template: "controls header"
+	               "left right";
 	grid-template-columns: 450px 1fr;
 	grid-template-rows: 40px 1fr;
 	grid-gap: 0;
@@ -17,12 +19,109 @@ body {
 	height: 100vh;
 }
 
-#nav {
-	grid-area: nav;
+#controls {
+	background-color: white;
+	grid-area: controls;
+}
+
+header {
+	grid-area: header;
+	border-left: 50px solid #e9e9e9;
+	padding-left: 10px;
+}
+
+/* Source tree and class filtering */
+#left {
+	grid-area: left;
 	height: 100%;
 	width: 100%;
 	border: none;
 }
+
+/* Main source view */
+#right {
+	grid-area: right;
+	width: 100%;
+	height: 100%;
+	border: none;
+}
+
+/*****************************
+ * Source Header
+ */
+
+header h1 {
+	margin: 0;
+}
+
+/*****************************
+ * Controls/Menu
+ */
+
+#controls ul {
+	list-style: none;
+	margin: 0;
+	padding-left: 0;
+	height: 40px;
+
+	display: flex;
+}
+
+#controls li {
+	outline: 1px solid grey;
+	outline-offset: -1px;
+
+	display: block;
+	position: relative;
+	text-decoration: none;
+	padding: 10px;
+
+	flex-grow: 1;
+	text-align: center;
+}
+
+#controls li a {
+}
+
+#controls li:hover {
+	cursor: pointer;
+}
+
+#controls ul li ul {
+	visibility: hidden;
+	opacity: 0;
+	min-width: 270px;
+	position: absolute;
+	margin-top: 10px;
+	left: 0;
+	display: none;
+	height: inherit;
+
+	background-color: white;
+
+	box-shadow: 3px 3px 7px -3px rgba(0,0,0,0.25);
+}
+
+#controls ul li:hover > ul,
+#controls ul li:focus-within > ul,
+#controls ul li ul:hover {
+	visibility: visible;
+	opacity: 1;
+	display: block;
+}
+
+#controls ul li ul li {
+}
+
+#controls img {
+	max-height: 30px;
+	margin-top: -6px;
+	vertical-align: middle;
+}
+
+/*****************************
+ * Source tree and class filtering
+ */
 
 #tree-holder {
 	display: grid;
@@ -32,7 +131,7 @@ body {
 
 	grid-template-rows: 40px 1fr;
 
-	box-shadow: -10px 0 10px -7px rgba(0,0,0,0.5) inset;
+	box-shadow: -10px 5px 10px -7px rgba(0,0,0,0.5) inset;
 }
 
 #tree {
@@ -53,23 +152,7 @@ body {
 	background: none;
 	border: 0;
 	font-size: 1.2em;
-}
-
-header {
-	grid-area: header;
-	border-left: 50px solid #e9e9e9;
-	padding-left: 10px;
-}
-
-header h1 {
-	margin: 0;
-}
-
-#source {
-	grid-area: source;
-	width: 100%;
-	height: 100%;
-	border: none;
+	outline-offset: -2px;
 }
 
 /* Tree Style */
@@ -84,7 +167,6 @@ header h1 {
 }
 
 #tree .node a {
-	/*display: block;*/
 	cursor: pointer;
 }
 
