@@ -1,5 +1,7 @@
 <#macro jsonnode node depth>
 	{
+		"path": "${node.clazz.pkg.sourceSet.outPath}",
+		"set": "${node.clazz.pkg.sourceSet.name}",
 		"pkg": "${node.clazz.pkg.name}",
 		"clazz": "${node.clazz.name}",
 		"children": [
@@ -12,8 +14,8 @@
 
 <html lang="en">
 <head>
-	<link rel="stylesheet" href="static/style.css">
-	<link rel="stylesheet" href="static/solarized-light.css">
+	<link rel="stylesheet" href="../static/style.css">
+	<link rel="stylesheet" href="../static/solarized-light.css">
 </head>
 
 <body>
@@ -117,7 +119,7 @@
 		function openClassNode(node) {
 			port2.postMessage({
 				"event": "nav",
-				"url": node.pkg.toLowerCase() + "/" + node.clazz.toLowerCase() + ".html"
+				"url": node.path.toLowerCase() + "/" + node.pkg.toLowerCase() + "/" + node.clazz.toLowerCase() + ".html"
 			});
 		}
 

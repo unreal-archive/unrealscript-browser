@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>${clazz.pkg.name}.${clazz.name}</title>
-	<link rel="stylesheet" href="../static/style.css">
-	<link rel="stylesheet" href="../static/solarized-light.css">
+	<title>${clazz.pkg.sourceSet.name} / ${clazz.pkg.name}.${clazz.name}</title>
+	<link rel="stylesheet" href="../../static/style.css">
+	<link rel="stylesheet" href="../../static/solarized-light.css">
 </head>
 
 <body>
@@ -27,6 +27,7 @@
 
 			port2.postMessage({
 					"event": "loaded",
+					"set": "${clazz.pkg.sourceSet.name}",
 					"pkg": "${clazz.pkg.name}",
 					"clazz": "${clazz.name}"
 			});

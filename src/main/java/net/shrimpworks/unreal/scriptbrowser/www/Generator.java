@@ -83,6 +83,8 @@ public class Generator {
 
 	public static void tree(Collection<UClassNode> nodes, Path outPath) {
 		try {
+			if (!Files.isDirectory(outPath)) Files.createDirectories(outPath);
+
 			Template tpl = TPL_CONFIG.getTemplate("tree.ftl");
 			try (Writer writer = Channels.newWriter(
 				Files.newByteChannel(
@@ -101,11 +103,8 @@ public class Generator {
 	public static void src(UClass clazz, Path outPath) {
 		try (InputStream is = Files.newInputStream(clazz.path, StandardOpenOption.READ)) {
 			final Path htmlOut = outPath.resolve(clazz.pkg.name.toLowerCase());
-			try {
-				if (!Files.isDirectory(htmlOut)) Files.createDirectories(htmlOut);
-			} catch (IOException e) {
-				// oops
-			}
+
+			if (!Files.isDirectory(htmlOut)) Files.createDirectories(htmlOut);
 
 			Template tpl = TPL_CONFIG.getTemplate("script.ftl");
 

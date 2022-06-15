@@ -1,14 +1,22 @@
 package net.shrimpworks.unreal.scriptbrowser;
 
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
 public class USources {
 
+	public final String name;
+	public final String outPath;
+	public final List<Path> paths;
 	public final Map<String, UPackage> packages;
 
-	public USources() {
+	public USources(String name, String outPath, List<Path> paths) {
+		this.name = name;
+		this.outPath = outPath;
+		this.paths = paths;
 		this.packages = new TreeMap<>();
 	}
 

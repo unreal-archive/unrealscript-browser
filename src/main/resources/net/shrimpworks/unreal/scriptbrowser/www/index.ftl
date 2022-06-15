@@ -9,7 +9,7 @@
 
 <body>
 <div id="page">
-	<iframe id="nav" src="tree.html"></iframe>
+	<iframe id="nav" src="ut99/tree.html"></iframe>
 
 	<header><h1 id="header"></h1></header>
 
@@ -50,7 +50,7 @@
 			port1.onmessage = (m) => {
 				switch (m.data.event) {
 					case "loaded":
-						header.innerHTML = m.data.pkg + " / " + m.data.clazz
+						header.innerHTML = m.data.set + " / " + m.data.pkg + " / " + m.data.clazz
 						break
 					default:
 						console.log("unknown message event ", m.data.type, m.data)

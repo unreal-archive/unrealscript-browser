@@ -37,19 +37,63 @@ public class App {
 		}
 	}
 
-	public static void main(String[] args) throws IOException {
-		final long startTime = System.currentTimeMillis();
+	private static List<USources> loadProperties() throws IOException {
+		IniFile config = new IniFile(Paths.get("sources.ini"));
+		return config.sections().stream()
+					 .map(s -> new USources(
+						 s,
+						 config.section(s).value("out").toString(),
+						 config.section(s)
+							   .asList("paths").values
+							 .stream()
+							 .map(v -> Paths.get(v.toString()))
+							 .collect(Collectors.toList()))
+					 ).collect(Collectors.toList());
+	}
 
+	public static void main(String[] args) throws IOException {
 		CLI cli = CLI.parse(Map.of(), args);
 
-		Path srcPath = Paths.get(cli.commands()[0]);
-		Path outPath = Paths.get(cli.commands()[1]);
+		Path outPath = Paths.get(cli.commands()[0]);
 
-		USources sources = new USources();
+		List<USources> sources = loadProperties();
+		for (USources source : sources) {
+			System.err.printf("Generating sources for %s%n", source.name);
+			loadSources(source);
+//			printTree(children(source, null), 0);
+			final long loadedTime = System.currentTimeMillis();
 
+			final Path htmlOut = outPath.resolve(source.outPath);
+
+			System.err.println("  - Generating navigation tree");
+			Generator.tree(children(source, null), htmlOut);
+
+			System.err.println("  - Generating source pages");
+			source.packages.values().forEach(pkg -> pkg.classes.values().parallelStream()
+															   .filter(c -> c.kind == UClass.UClassKind.CLASS)
+															   .forEach(e -> Generator.src(e, htmlOut)));
+			final long genTime = System.currentTimeMillis();
+			System.err.printf("  - Generated HTML in %dms%n", genTime - loadedTime);
+		}
+
+		System.err.println("Generating index page");
+		Generator.offloadStatic("static.list", outPath);
+		Generator.index(outPath);
+
+		System.err.println("Done");
+	}
+
+	private static void loadSources(USources sources) throws IOException {
+		for (Path srcPath : sources.paths) {
+			loadSources(sources, srcPath);
+		}
+	}
+
+	private static void loadSources(USources sources, Path srcPath) throws IOException {
+		final long startTime = System.currentTimeMillis();
 		final AtomicInteger classCounter = new AtomicInteger(0);
 		try (Stream<Path> paths = Files.list(srcPath)) {
-			System.err.printf("Loading classes from %s%n", srcPath);
+			System.err.printf("  - Loading classes from %s%n", srcPath);
 
 			paths.map(p -> {
 					 if (!Files.isDirectory(p)) return null;
@@ -84,26 +128,8 @@ public class App {
 				 .forEach(sources::addPackage);
 		}
 		final long loadedTime = System.currentTimeMillis();
-		System.err.printf("Loaded %d classes in %d packages in %dms%n", classCounter.get(), sources.packages.size(),
+		System.err.printf("  - Loaded %d classes in %d packages in %dms%n", classCounter.get(), sources.packages.size(),
 						  loadedTime - startTime);
-
-		System.err.println("Generating index page");
-		Generator.offloadStatic("static.list", outPath);
-		Generator.index(outPath);
-
-		System.err.println("Generating navigation tree");
-		Generator.tree(children(sources, null), outPath);
-
-		System.err.println("Generating source pages");
-		sources.packages.values().forEach(pkg -> pkg.classes.values().parallelStream()
-															.filter(c -> c.kind == UClass.UClassKind.CLASS)
-															.forEach(e -> Generator.src(e, outPath)));
-		final long genTime = System.currentTimeMillis();
-		System.err.printf("Generated HTML in %dms%n", genTime - loadedTime);
-
-//		printTree(children(sources, null), 0);
-
-		System.err.println("Done");
 	}
 
 	public static List<UClassNode> children(USources sources, UClass parent) {
