@@ -5,10 +5,17 @@
 	<link rel="stylesheet" href="../../static/style.css">
 	<link rel="stylesheet" href="../../static/solarized-light.css" id="style">
 	<script>
-		// FIXME query string?
-	  if (window.localStorage.getItem("style")) {
-		  document.getElementById("style").setAttribute("href", "../../static/" + window.localStorage.getItem("style") + ".css")
+	  const urlParams = new URLSearchParams(window.location.search);
+	  const style = document.getElementById("style")
+	  let currentStyle = 'solarized-light'
+
+	  if (urlParams.has('s')) {
+		  currentStyle = urlParams.get('s')
+	  } else if (window.localStorage.getItem("style")) {
+		  currentStyle = window.localStorage.getItem("style")
 	  }
+
+		style.setAttribute("href", "../../static/" + currentStyle + ".css")
 	</script>
 </head>
 
@@ -41,7 +48,8 @@
 			port2.onmessage = (m) => {
 				switch (m.data.event) {
 					case "style":
-						document.getElementById("style").setAttribute("href", "../../static/" + m.data.style + ".css")
+							currentStyle = m.data.style
+							style.setAttribute("href", "../../static/" + currentStyle + ".css")
 						break
 					default:
 						console.log("unknown message event ", m.data.event, m.data)

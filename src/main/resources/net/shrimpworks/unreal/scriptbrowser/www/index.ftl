@@ -6,9 +6,17 @@
 	<link rel="stylesheet" href="static/style.css">
 	<link rel="stylesheet" href="static/solarized-light.css" id="style">
 	<script>
-		if (window.localStorage.getItem("style")) {
-			document.getElementById("style").setAttribute("href", "static/" + window.localStorage.getItem("style") + ".css")
-		}
+	  const urlParams = new URLSearchParams(window.location.search);
+	  const style = document.getElementById("style")
+		let currentStyle = 'solarized-light'
+
+		if (urlParams.has('s')) {
+			currentStyle = urlParams.get('s')
+	  } else if (window.localStorage.getItem("style")) {
+			currentStyle = window.localStorage.getItem("style")
+	  }
+
+		style.setAttribute("href", "static/" + currentStyle + ".css")
 	</script>
 </head>
 
@@ -16,12 +24,12 @@
 <div id="page">
 	<div id="controls">
 		<ul>
-			<li id="menu-home"><img src="static/icons/home.svg"/></li>
-			<li><img src="static/icons/file-code.svg"/>
+			<li id="menu-home" title="Home"><img src="static/icons/home.svg" alt="home"/></li>
+			<li title="Select Source Set"><img src="static/icons/file-code.svg" alt="sources"/>
 				<ul id="menu-sources" class="dropdown"></ul>
 			</li>
-			<li id="menu-download"><img src="static/icons/file-download.svg"/></li>
-			<li><img src="static/icons/palette.svg"/>
+			<li id="menu-download" title="Download Current Sources"><img src="static/icons/file-download.svg" alt="download"/></li>
+			<li title="Set Highlighting Style"><img src="static/icons/palette.svg" alt="style"/>
 				<ul id="menu-styles" class="dropdown">
 					<li data-name="solarized-light">Solarized Light</li>
 					<li data-name="solarized-dark">Solarized Dark</li>
@@ -30,7 +38,7 @@
 					<li data-name="">Basic</li>
 				</ul>
 			</li>
-			<li id="menu-target"><img src="static/icons/target.svg"/></li>
+			<li id="menu-target" title="Select Opened Class"><img src="static/icons/target.svg" alt="goto"/></li>
 		</ul>
 	</div>
 
@@ -59,6 +67,7 @@
 		const header = document.getElementById("header")
 		const nav = document.getElementById("left")
 		const source = document.getElementById("right")
+		let shownSource;
 
 		const styleChangeListeners = [];
 
@@ -68,8 +77,8 @@
 				const item = document.createElement('li')
 				item.textContent = s.name
 				item.addEventListener("click", () => {
-					nav.src = s.path + "/tree.html"
-					source.src = s.path + "/index.html"
+					nav.src = s.path + "/tree.html?s=" + currentStyle
+					source.src = s.path + "/index.html?s=" + currentStyle
 				})
 				menu.appendChild(item)
 			})
@@ -77,15 +86,16 @@
 
 		sourcesMenu()
 
-		document.querySelectorAll("#menu-styles li").forEach((e) => {
-			e.addEventListener("click", () => {
-				styleChangeListeners.forEach((f) => f(e.dataset.name))
-			})
-		})
+	  document.querySelectorAll("#menu-styles li").forEach((e) => {
+		  e.addEventListener("click", () => {
+			  styleChangeListeners.forEach((f) => f(e.dataset.name))
+		  })
+	  })
 
 		styleChangeListeners.push((s) => {
-			document.getElementById("style").setAttribute("href", `static/${s}.css`)
-			window.localStorage.setItem("style", s);
+			currentStyle = s
+			document.getElementById("style").setAttribute("href", `static/${currentStyle}.css`)
+			window.localStorage.setItem("style", currentStyle);
 		})
 
 		// establish comms with the navigation tree, so it can tell us what to put into the source area
@@ -96,7 +106,7 @@
 			port1.onmessage = (m) => {
 				switch (m.data.event) {
 					case "nav":
-			  		source.src = m.data.url;
+						source.src = `${m.data.path.toLowerCase()}/${m.data.pkg.toLowerCase()}/${m.data.clazz.toLowerCase()}.html?s=${currentStyle}`
 						break
 					default:
 						console.log("unknown message event ", m.data.type, m.data)
@@ -104,10 +114,20 @@
 			}
 
 			styleChangeListeners.push((s) => {
-				channel.port1.postMessage({
+				port1.postMessage({
 					"event": "style",
 					"style": s
 				})
+			})
+
+			// clicking "goto source" transfers the current selected node to the tree, which will navigate to the class
+			document.getElementById("menu-target").addEventListener("click", () => {
+				if (shownSource) {
+					port1.postMessage({
+						"event": "goto",
+						"target": shownSource
+					})
+				}
 			})
 
 			nav.contentWindow.postMessage('hello nav', '*', [channel.port2])
@@ -118,22 +138,26 @@
 			const channel = new MessageChannel()
 			const port1 = channel.port1
 
+			const pushStyle = (s) => {
+				channel.port1.postMessage({
+					"event": "style",
+					"style": s
+				})
+			}
+
 			port1.onmessage = (m) => {
 				switch (m.data.event) {
 					case "loaded":
 						header.innerHTML = `${m.data.set} / ${m.data.pkg} / ${m.data.clazz}`
+			  		pushStyle(currentStyle)
+						shownSource = m.data
 						break
 					default:
 						console.log("unknown message event ", m.data.event, m.data)
 				}
 			}
 
-			styleChangeListeners.push((s) => {
-				channel.port1.postMessage({
-					"event": "style",
-					"style": s
-				})
-			})
+			styleChangeListeners.push(pushStyle)
 
 			source.contentWindow.postMessage('hello source', '*', [channel.port2])
 		})

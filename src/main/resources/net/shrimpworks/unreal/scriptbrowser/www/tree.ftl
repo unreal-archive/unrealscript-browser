@@ -17,10 +17,17 @@
 	<link rel="stylesheet" href="../static/style.css">
 	<link rel="stylesheet" href="../static/solarized-light.css" id="style">
 	<script>
-	  // FIXME query string?
-	  if (window.localStorage.getItem("style")) {
-		  document.getElementById("style").setAttribute("href", "../static/" + window.localStorage.getItem("style") + ".css")
+	  const urlParams = new URLSearchParams(window.location.search);
+	  const style = document.getElementById("style")
+	  let currentStyle = 'solarized-light'
+
+	  if (urlParams.has('s')) {
+		  currentStyle = urlParams.get('s')
+	  } else if (window.localStorage.getItem("style")) {
+		  currentStyle = window.localStorage.getItem("style")
 	  }
+
+		style.setAttribute("href", "../static/" + currentStyle + ".css")
 	</script>
 </head>
 
@@ -53,7 +60,11 @@
 			port2.onmessage = (m) => {
 				switch (m.data.event) {
 					case "style":
-			  		document.getElementById("style").setAttribute("href", `../static/${m.data.style}.css`)
+			  		currentStyle = m.data.style
+			  		style.setAttribute("href", `../static/${currentStyle}.css`)
+						break
+					case "goto":
+			  		gotoNode(m.data.target)
 						break
 					default:
 						console.log("unknown message event ", m.data.event, m.data)
@@ -70,9 +81,10 @@
 
 	  function treeNode(node, depth) {
 			const div = document.createElement('div');
-			div.classList.add("node");
+			div.classList.add("node")
+			div.id = `${node.pkg.toLowerCase()}.${node.clazz.toLowerCase()}`
 
-			const kids = document.createElement('div');
+			const kids = document.createElement('div')
 
 			const pad = document.createElement('span')
 			pad.classList.add("pad")
@@ -86,8 +98,7 @@
 	  	}
 			div.appendChild(pad);
 
-			const link =  document.createElement('a');
-			link.id = `${node.pkg}.${node.clazz}`
+			const link =  document.createElement('a')
 			link.textContent = node.clazz
 			link.addEventListener("click", () => openClassNode(node))
 			div.appendChild(link)
@@ -95,7 +106,7 @@
 			if (node.children) {
 				kids.classList.add("children")
 				node.children.forEach((child) => {
-					kids.appendChild(treeNode(child, depth + 1));
+					kids.appendChild(treeNode(child, depth + 1))
 				});
 				div.appendChild(kids)
 			}
@@ -116,9 +127,9 @@
 		function filterNode(parent, node, filterString) {
 		  if (node.clazz.toLowerCase().includes(filterString.toLowerCase())) {
 				const div = document.createElement('div');
+				div.id = `${node.pkg.toLowerCase()}.${node.clazz.toLowerCase()}`
 				div.classList.add("node");
 				const link = document.createElement('a');
-				link.id = `${node.pkg}.${node.clazz}`
 				link.textContent = node.clazz
 				link.addEventListener("click", () => openClassNode(node))
 				div.appendChild(link)
@@ -131,8 +142,23 @@
 		function openClassNode(node) {
 			port2.postMessage({
 				"event": "nav",
-				"url": `${node.path.toLowerCase()}/${node.pkg.toLowerCase()}/${node.clazz.toLowerCase()}.html`
+				"path": node.path.toLowerCase(),
+				"pkg": node.pkg.toLowerCase(),
+				"clazz": node.clazz.toLowerCase(),
 			});
+		}
+
+		function gotoNode(target) {
+			const node = document.getElementById(`${target.pkg.toLowerCase()}.${target.clazz.toLowerCase()}`)
+			let parent = node.parentElement
+			while (parent != null && (parent.classList.contains("node") || parent.classList.contains("children"))) {
+				if (parent.classList.contains("children")) {
+					if (!parent.classList.contains("open")) parent.classList.add("open")
+				}
+
+				parent = parent.parentElement
+			}
+			node.scrollIntoView(true)
 		}
 
 		initTree()
