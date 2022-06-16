@@ -1,0 +1,24 @@
+:root {
+	--color: #87939a;
+	--source-color: white;
+	--source-bg: #272822;
+	--secondary-bg: #3c3f41;
+	--lines-color: #6e6f6c;
+	--lines-gb: var(--source-bg);
+	--comment: #74715e;
+	--directive: var(--comment);
+	--operator: #f92772;
+	--keyword: #f92772;
+	--type: #a7e22e;
+	--const-number: #ae81ff;
+	--const-bool: var(--keyword);
+	--const-string: #e6da74;
+	--const-name: var(--const-string);
+	--const-none: var(--const-name);
+	--var-local: #66d9ee;
+	--var-global: var(--var-local);
+}
+
+#controls li {
+	outline: 1px solid var(--source-bg);
+}

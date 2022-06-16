@@ -1,4 +1,26 @@
+:root {
+	--color: black;
+	--source-color: #333;
+	--source-bg: white;
+	--secondary-bg: #e9e9e9;
+	--lines-color: gray;
+	--lines-gb: #e9e9e9;
+	--comment: gray;
+	--directive: darkgreen;
+	--operator: brown;
+	--keyword: black;
+	--type: crimson;
+	--const-number: navy;
+	--const-bool: navy;
+	--const-string: chocolate;
+	--const-name: darkmagenta;
+	--const-none: var(--const-name);
+	--var-local: blue;
+	--var-global: var(--var-local);
+}
+
 body {
+	color: var(--color);
 	margin: 0;
 	font-family: sans-serif;
 	text-rendering: optimizeLegibility;
@@ -20,14 +42,16 @@ body {
 }
 
 #controls {
-	background-color: white;
+	background-color: var(--secondary-bg);
 	grid-area: controls;
 }
 
 header {
 	grid-area: header;
-	border-left: 50px solid #e9e9e9;
 	padding-left: 10px;
+
+	background-color: var(--source-bg);
+	border-left: 50px solid var(--lines-gb);
 }
 
 /* Source tree and class filtering */
@@ -35,7 +59,9 @@ header {
 	grid-area: left;
 	height: 100%;
 	width: 100%;
-	border: none;
+	border: 0;
+
+	background-color: var(--secondary-bg);
 }
 
 /* Main source view */
@@ -43,7 +69,9 @@ header {
 	grid-area: right;
 	width: 100%;
 	height: 100%;
-	border: none;
+	border: 0;
+
+	background-color: var(--source-bg);
 }
 
 /*****************************
@@ -68,7 +96,7 @@ header h1 {
 }
 
 #controls li {
-	outline: 1px solid grey;
+	outline: 1px solid var(--source-bg);
 	outline-offset: -1px;
 
 	display: block;
@@ -97,7 +125,7 @@ header h1 {
 	display: none;
 	height: inherit;
 
-	background-color: white;
+	background-color: var(--secondary-bg);
 
 	box-shadow: 3px 3px 7px -3px rgba(0,0,0,0.25);
 }
@@ -131,7 +159,8 @@ header h1 {
 
 	grid-template-rows: 40px 1fr;
 
-	box-shadow: -10px 5px 10px -7px rgba(0,0,0,0.5) inset;
+	background-color: var(--secondary-bg);
+	box-shadow: -10px 5px 10px -7px rgba(0,0,0,0.4) inset;
 }
 
 #tree {
@@ -153,6 +182,10 @@ header h1 {
 	border: 0;
 	font-size: 1.2em;
 	outline-offset: -2px;
+}
+
+#search input:focus {
+	background-color: white;
 }
 
 /* Tree Style */
@@ -198,6 +231,10 @@ header h1 {
 
 	width: 100vw;
 	min-height: 100vh;
+
+	background-color: var(--source-bg);
+
+	font-size: 1.1em;
 }
 
 #lines {
@@ -210,8 +247,8 @@ header h1 {
 	padding: 5px;
 	line-height: 1.4em;
 
-	color: gray;
-	background-color: #e9e9e9;
+	color: var(--lines-color);
+	background-color: var(--lines-gb);
 }
 
 #script pre {
@@ -222,77 +259,77 @@ header h1 {
 	padding: 5px;
 	line-height: 1.4em;
 
-	color: #333;
+	color: var(--source-color);
 }
 
 #script pre a[href] {
 	color: inherit;
 	text-decoration: inherit;
 	font-weight: inherit;
-	border-bottom: 0.25px dotted navy;
+	border-bottom: 0.25px dotted var(--source-color);
 }
 
 /* Code Formatting */
 
 #script pre a[href]:hover {
-	background-color: #e9e9e9;
+	background-color: var(--secondary-bg);
+}
+
+#script pre {
+	color: var(--source-color);
 }
 
 pre .cmt {
-	color: gray;
+	color: var(--comment);
 }
 
 pre .dir {
-	color: darkgreen;
+	color: var(--directive);
+	font-weight: bold;
 }
 
 pre .cls {
 	font-weight: bold;
 }
 
-pre .ident {
-	font-weight: bold;
-}
-
 pre .op {
-	color: brown;
-	font-weight: bold;
+	color: var(--operator);
 }
 
 pre .kw {
-	color: black;
+	color: var(--keyword);
 }
 
 pre .typ {
-	color: crimson;
+	color: var(--type);
 }
 
 pre .num {
-	color: navy;
+	color: var(--const-number);
 }
 
 pre .bool {
-	color: navy;
+	color: var(--const-bool);
 }
 
 pre .name {
-	color: darkmagenta;
+	color: var(--const-name);
 }
 
 pre .none {
-	color: darkmagenta;
+	color: var(--const-none);
 }
 
 pre .str {
-	color: chocolate;
+	color: var(--const-string);;
 }
 
 pre .lcl {
-	color: blue;
+	color: var(--var-local);;
 }
 
 pre .var {
-	color: blue;
+	color: var(--var-global);;
 	font-weight: bold;
 }
 

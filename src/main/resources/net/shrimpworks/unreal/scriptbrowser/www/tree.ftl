@@ -15,7 +15,13 @@
 <html lang="en">
 <head>
 	<link rel="stylesheet" href="../static/style.css">
-	<link rel="stylesheet" href="../static/solarized-light.css">
+	<link rel="stylesheet" href="../static/solarized-light.css" id="style">
+	<script>
+	  // FIXME query string?
+	  if (window.localStorage.getItem("style")) {
+		  document.getElementById("style").setAttribute("href", "../static/" + window.localStorage.getItem("style") + ".css")
+	  }
+	</script>
 </head>
 
 <body>
@@ -44,9 +50,15 @@
 	  window.addEventListener('message', (e) => {
 		  port2 = e.ports[0]
 
-		  port2.onmessage = (m) => {
-			  console.log(m.data)
-		  }
+			port2.onmessage = (m) => {
+				switch (m.data.event) {
+					case "style":
+			  		document.getElementById("style").setAttribute("href", `../static/${m.data.style}.css`)
+						break
+					default:
+						console.log("unknown message event ", m.data.event, m.data)
+				}
+			}
 	  })
 
 		function initTree() {
@@ -119,7 +131,7 @@
 		function openClassNode(node) {
 			port2.postMessage({
 				"event": "nav",
-				"url": node.path.toLowerCase() + "/" + node.pkg.toLowerCase() + "/" + node.clazz.toLowerCase() + ".html"
+				"url": `${node.path.toLowerCase()}/${node.pkg.toLowerCase()}/${node.clazz.toLowerCase()}.html`
 			});
 		}
 

@@ -1,11 +1,11 @@
 :root {
-	--color: black;
+	--color: silver;
 	--source-color: #586e75;
-	--source-bg: #fdf6e3;
-	--secondary-bg: #eee8d5;
+	--source-bg: #002a35;
+	--secondary-bg: #053542;
 	--lines-color: gray;
 	--lines-gb: var(--secondary-bg);
-	--comment: #839496;
+	--comment: #657b83;
 	--directive: var(--comment);
 	--operator: #cb4b16;
 	--keyword: #859900;

@@ -1,0 +1,45 @@
+:root {
+	--color: black;
+	--source-color: white;
+	--source-bg: #000040;
+	--secondary-bg: white;
+	--lines-color: black;
+	--lines-gb: #d4d0c8;
+	--comment: #00ff00;
+	--directive: #808080;
+	--operator: white;
+	--keyword: #00ffff;
+	--type: white;
+	--const-number: white;
+	--const-bool: #00ffff;
+	--const-string: white;
+	--const-name: white;
+	--const-none: white;
+	--var-local: white;
+	--var-global: white;
+}
+
+header {
+	background-color: var(--lines-gb);
+}
+
+#controls {
+	background-color: var(--lines-gb);
+	grid-area: controls;
+}
+
+#controls li {
+	outline: 0;
+	border: 2px outset;
+	background-color: var(--lines-gb);
+}
+
+#controls ul li ul {
+	margin-top: 8px;
+}
+
+#controls li:hover {
+	background-color: navy;
+	color: white;
+	cursor: pointer;
+}
