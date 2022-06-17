@@ -41,6 +41,7 @@
 			port2.postMessage({
 					"event": "loaded",
 					"set": "${clazz.pkg.sourceSet.name}",
+					"setPath": "${clazz.pkg.sourceSet.outPath}",
 					"pkg": "${clazz.pkg.name}",
 					"clazz": "${clazz.name}"
 			});

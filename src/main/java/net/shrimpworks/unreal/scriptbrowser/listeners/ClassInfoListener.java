@@ -1,14 +1,24 @@
-package net.shrimpworks.unreal.scriptbrowser;
+package net.shrimpworks.unreal.scriptbrowser.listeners;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.stream.Collectors;
 
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
+import net.shrimpworks.unreal.scriptbrowser.entities.UClass;
+import net.shrimpworks.unreal.scriptbrowser.entities.UPackage;
 import net.shrimpworks.unreal.unrealscript.UnrealScriptBaseListener;
+import net.shrimpworks.unreal.unrealscript.UnrealScriptLexer;
 import net.shrimpworks.unreal.unrealscript.UnrealScriptParser;
 
-class ClassInfoListener extends UnrealScriptBaseListener {
+public class ClassInfoListener extends UnrealScriptBaseListener {
 
 	private final Path sourceFile;
 	private final UPackage pkg;
@@ -19,6 +29,22 @@ class ClassInfoListener extends UnrealScriptBaseListener {
 
 	// stateful processing
 	private boolean inState = false;
+
+	public static void processFile(Path sourceFile, UPackage pkg) {
+		try (InputStream is = Files.newInputStream(sourceFile, StandardOpenOption.READ)) {
+			UnrealScriptLexer lexer = new UnrealScriptLexer(CharStreams.fromStream(is));
+			lexer.removeErrorListeners();
+			lexer.addErrorListener(UnrealScriptErrorListener.INSTANCE);
+			CommonTokenStream tokens = new CommonTokenStream(lexer);
+			UnrealScriptParser parser = new UnrealScriptParser(tokens);
+			parser.removeErrorListeners();
+			parser.addErrorListener(UnrealScriptErrorListener.INSTANCE);
+			ClassInfoListener listener = new ClassInfoListener(sourceFile, pkg);
+			ParseTreeWalker.DEFAULT.walk(listener, parser.program());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	public ClassInfoListener(Path sourceFile, UPackage pkg) {
 		this.sourceFile = sourceFile;

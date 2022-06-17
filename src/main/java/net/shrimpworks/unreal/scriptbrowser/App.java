@@ -1,11 +1,9 @@
 package net.shrimpworks.unreal.scriptbrowser;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -14,31 +12,87 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.antlr.v4.runtime.BaseErrorListener;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.RecognitionException;
-import org.antlr.v4.runtime.Recognizer;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
-
+import net.shrimpworks.unreal.scriptbrowser.entities.UClass;
+import net.shrimpworks.unreal.scriptbrowser.entities.UClassNode;
+import net.shrimpworks.unreal.scriptbrowser.entities.UPackage;
+import net.shrimpworks.unreal.scriptbrowser.entities.USources;
+import net.shrimpworks.unreal.scriptbrowser.listeners.ClassInfoListener;
 import net.shrimpworks.unreal.scriptbrowser.www.Generator;
-import net.shrimpworks.unreal.unrealscript.UnrealScriptLexer;
-import net.shrimpworks.unreal.unrealscript.UnrealScriptParser;
+import net.shrimpworks.unreal.scriptbrowser.www.ZipGenerator;
 
 public class App {
 
-	public static class UnrealScriptErrorListener extends BaseErrorListener {
+	public static class Progress {
 
-		public static final UnrealScriptErrorListener INSTANCE = new UnrealScriptErrorListener();
+		private static final int WIDTH = 50;
 
-		@Override
-		public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg,
-								RecognitionException e) {
-			// no-op?
+		private final double total;
+
+		public Progress(int total) {
+			this.total = total;
+		}
+
+		public void progress(int processed, UClass current) {
+			int prog = (int)((processed / total) * WIDTH);
+			int space = WIDTH - prog;
+			System.err.printf("\r    [%s%s] %d/%d: %-20s", "=".repeat(prog), " ".repeat(space),
+							  processed, (int)total, current.name.substring(0, Math.min(20, current.name.length())));
 		}
 	}
 
-	private static List<USources> loadProperties() throws IOException {
+	public static void main(String[] args) throws IOException {
+		final CLI cli = CLI.parse(Map.of(), Set.of(), args);
+
+		final Path outPath = Paths.get(cli.commands()[0]);
+
+		final List<USources> sources = createSourcesFromProperties();
+
+		if (!cli.flag("skip-sources")) {
+			for (USources source : sources) {
+
+				System.err.printf("Generating sources for %s%n", source.name);
+				loadSources(source);
+//				printTree(children(source, null), 0);
+
+				final long loadedTime = System.currentTimeMillis();
+
+				final Path srcOut = outPath.resolve(source.outPath);
+
+				System.err.println("  - Generating navigation tree");
+				Generator.tree(children(source, null), srcOut);
+
+				System.err.println("  - Generating source pages");
+				Progress p = new Progress(source.classCount());
+				AtomicInteger counter = new AtomicInteger();
+				source.packages.values().forEach(pkg -> pkg.classes.values().parallelStream()
+																   .filter(c -> c.kind == UClass.UClassKind.CLASS)
+																   .forEach(c -> {
+																	   p.progress(counter.incrementAndGet(), c);
+																	   Generator.src(c, srcOut);
+																   }));
+				System.err.printf("\r%-90s", ""); // clear progress :/
+
+				// FIXME landing page/info for source set
+
+				final long genTime = System.currentTimeMillis();
+				System.err.printf("\r  - Generated HTML in %dms%n", genTime - loadedTime);
+
+				System.err.println("  - Generating source archive");
+				ZipGenerator.zipSources(source, srcOut);
+
+				final long zipTime = System.currentTimeMillis();
+				System.err.printf("\r  - Generated source archive in %dms%n", zipTime - genTime);
+			}
+		}
+
+		System.err.println("Generating index page");
+		Generator.offloadStatic("static.list", outPath);
+		Generator.index(sources, outPath);
+
+		System.err.println("Done");
+	}
+
+	private static List<USources> createSourcesFromProperties() throws IOException {
 		final IniFile config = new IniFile(Paths.get("sources.ini"));
 		return config.sections().stream()
 					 .map(s -> new USources(
@@ -52,42 +106,6 @@ public class App {
 					 ).collect(Collectors.toList());
 	}
 
-	public static void main(String[] args) throws IOException {
-		final CLI cli = CLI.parse(Map.of(), Set.of(), args);
-
-		final Path outPath = Paths.get(cli.commands()[0]);
-
-		final List<USources> sources = loadProperties();
-
-		if (!cli.flag("skip-sources")) {
-			for (USources source : sources) {
-				System.err.printf("Generating sources for %s%n", source.name);
-				loadSources(source);
-//				printTree(children(source, null), 0);
-
-				final long loadedTime = System.currentTimeMillis();
-
-				final Path srcOut = outPath.resolve(source.outPath);
-
-				System.err.println("  - Generating navigation tree");
-				Generator.tree(children(source, null), srcOut);
-
-				System.err.println("  - Generating source pages");
-				source.packages.values().forEach(pkg -> pkg.classes.values().parallelStream()
-																   .filter(c -> c.kind == UClass.UClassKind.CLASS)
-																   .forEach(e -> Generator.src(e, srcOut)));
-				final long genTime = System.currentTimeMillis();
-				System.err.printf("  - Generated HTML in %dms%n", genTime - loadedTime);
-			}
-		}
-
-		System.err.println("Generating index page");
-		Generator.offloadStatic("static.list", outPath);
-		Generator.index(sources, outPath);
-
-		System.err.println("Done");
-	}
-
 	private static void loadSources(USources sources) throws IOException {
 		for (Path srcPath : sources.paths) {
 			loadSources(sources, srcPath);
@@ -96,7 +114,6 @@ public class App {
 
 	private static void loadSources(USources sources, Path srcPath) throws IOException {
 		final long startTime = System.currentTimeMillis();
-		final AtomicInteger classCounter = new AtomicInteger(0);
 		try (Stream<Path> paths = Files.list(srcPath)) {
 			System.err.printf("  - Loading classes from %s%n", srcPath);
 
@@ -108,24 +125,11 @@ public class App {
 						 all.forEach(f -> {
 							 if (!extension(f).equalsIgnoreCase("uc")) return;
 
-							 try (InputStream is = Files.newInputStream(f, StandardOpenOption.READ)) {
-								 UnrealScriptLexer lexer = new UnrealScriptLexer(CharStreams.fromStream(is));
-								 lexer.removeErrorListeners();
-								 lexer.addErrorListener(UnrealScriptErrorListener.INSTANCE);
-								 CommonTokenStream tokens = new CommonTokenStream(lexer);
-								 UnrealScriptParser parser = new UnrealScriptParser(tokens);
-								 parser.removeErrorListeners();
-								 parser.addErrorListener(UnrealScriptErrorListener.INSTANCE);
-								 ClassInfoListener listener = new ClassInfoListener(f, pkg);
-								 ParseTreeWalker.DEFAULT.walk(listener, parser.program());
-							 } catch (IOException e) {
-								 throw new RuntimeException(e);
-							 }
+							 ClassInfoListener.processFile(f, pkg);
 						 });
 					 } catch (IOException e) {
 						 throw new RuntimeException(e);
 					 }
-					 classCounter.addAndGet(pkg.classes.size());
 					 return pkg;
 				 })
 				 .filter(Objects::nonNull)
@@ -133,8 +137,8 @@ public class App {
 				 .forEach(sources::addPackage);
 		}
 		final long loadedTime = System.currentTimeMillis();
-		System.err.printf("  - Loaded %d classes in %d packages in %dms%n", classCounter.get(), sources.packages.size(),
-						  loadedTime - startTime);
+		System.err.printf("  - Loaded %d classes in %d packages in %dms%n",
+						  sources.classCount(), sources.packages.size(), loadedTime - startTime);
 	}
 
 	public static List<UClassNode> children(USources sources, UClass parent) {

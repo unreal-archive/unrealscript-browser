@@ -24,17 +24,11 @@ import freemarker.template.Configuration;
 import freemarker.template.DefaultObjectWrapper;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
-import net.shrimpworks.unreal.scriptbrowser.App;
-import net.shrimpworks.unreal.scriptbrowser.ClassFormatterListener;
-import net.shrimpworks.unreal.scriptbrowser.UClass;
-import net.shrimpworks.unreal.scriptbrowser.UClassNode;
-import net.shrimpworks.unreal.scriptbrowser.USources;
-import net.shrimpworks.unreal.unrealscript.UnrealScriptLexer;
-import net.shrimpworks.unreal.unrealscript.UnrealScriptParser;
+import net.shrimpworks.unreal.scriptbrowser.entities.UClass;
+import net.shrimpworks.unreal.scriptbrowser.entities.UClassNode;
+import net.shrimpworks.unreal.scriptbrowser.entities.USources;
+import net.shrimpworks.unreal.scriptbrowser.listeners.ClassFormatterListener;
 
 public class Generator {
 
@@ -106,33 +100,25 @@ public class Generator {
 	}
 
 	public static void src(UClass clazz, Path outPath) {
-		try (InputStream is = Files.newInputStream(clazz.path, StandardOpenOption.READ)) {
+		try {
 			final Path htmlOut = outPath.resolve(clazz.pkg.name.toLowerCase());
 
 			if (!Files.isDirectory(htmlOut)) Files.createDirectories(htmlOut);
 
 			Template tpl = TPL_CONFIG.getTemplate("script.ftl");
 
-			UnrealScriptLexer lexer = new UnrealScriptLexer(CharStreams.fromStream(is));
-			lexer.removeErrorListeners();
-			lexer.addErrorListener(App.UnrealScriptErrorListener.INSTANCE);
-			CommonTokenStream tokens = new CommonTokenStream(lexer);
-			UnrealScriptParser parser = new UnrealScriptParser(tokens);
-			parser.removeErrorListeners();
-			parser.addErrorListener(App.UnrealScriptErrorListener.INSTANCE);
-			ClassFormatterListener listener = new ClassFormatterListener(clazz, tokens);
-			ParseTreeWalker.DEFAULT.walk(listener, parser.program());
-
 			StringBuilder sb = new StringBuilder();
 			AtomicInteger lineCount = new AtomicInteger(0);
-			listener.getTranslatedText()
-					.lines()
-					.forEach(l -> {
-						lineCount.incrementAndGet();
-						sb.append(l.isBlank() ? "&nbsp;" : l.replaceAll("<", "&lt;").replaceAll(">", "&gt;")
-															.replaceAll("«", "<").replaceAll("»", ">"))
-						  .append("\n");
-					});
+			ClassFormatterListener.transformClazz(clazz)
+								  .lines()
+								  .forEach(l -> {
+									  lineCount.incrementAndGet();
+									  sb.append(l.isBlank()
+													? "&nbsp;"
+													: l.replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+													   .replaceAll("«", "<").replaceAll("»", ">"))
+										.append("\n");
+								  });
 			try (Writer writer = Channels.newWriter(
 				Files.newByteChannel(
 					htmlOut.resolve(clazz.name.toLowerCase() + ".html"),

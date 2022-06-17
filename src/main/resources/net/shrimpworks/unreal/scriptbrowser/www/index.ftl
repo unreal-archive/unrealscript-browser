@@ -79,6 +79,14 @@
 				item.addEventListener("click", () => {
 					nav.src = s.path + "/tree.html?s=" + currentStyle
 					source.src = s.path + "/index.html?s=" + currentStyle
+
+					document.getElementById("menu-download").addEventListener("click", () => {
+						const lnk = document.createElement("a")
+						lnk.href = s.path + "/" + s.name.replaceAll(" ", "_") + ".zip"
+						lnk.click()
+					})
+
+					history.pushState(m.data, header.textContent, `#${s.path}`)
 				})
 				menu.appendChild(item)
 			})
@@ -149,6 +157,9 @@
 				switch (m.data.event) {
 					case "loaded":
 						header.innerHTML = `${m.data.set} / ${m.data.pkg} / ${m.data.clazz}`
+
+			  		history.pushState(m.data, header.textContent, `#${m.data.setPath}/${m.data.pkg}/${m.data.clazz}`)
+
 			  		pushStyle(currentStyle)
 						shownSource = m.data
 						break
@@ -161,6 +172,8 @@
 
 			source.contentWindow.postMessage('hello source', '*', [channel.port2])
 		})
+
+		// FIXME restore state based on #url (#sources/pkg/clazz)
 	})
 </script>
 </#noparse>

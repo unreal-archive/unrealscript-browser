@@ -1,4 +1,4 @@
-package net.shrimpworks.unreal.scriptbrowser;
+package net.shrimpworks.unreal.scriptbrowser.entities;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -18,6 +18,10 @@ public class USources {
 		this.outPath = outPath;
 		this.paths = paths;
 		this.packages = new TreeMap<>();
+	}
+
+	public int classCount() {
+		return packages.values().stream().mapToInt(p -> p.classes.size()).sum();
 	}
 
 	public void addPackage(UPackage pkg) {

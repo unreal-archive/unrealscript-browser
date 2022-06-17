@@ -1,4 +1,4 @@
-package net.shrimpworks.unreal.scriptbrowser;
+package net.shrimpworks.unreal.scriptbrowser.entities;
 
 import java.nio.file.Path;
 import java.util.HashSet;

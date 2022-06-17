@@ -1,18 +1,27 @@
-package net.shrimpworks.unreal.scriptbrowser;
+package net.shrimpworks.unreal.scriptbrowser.listeners;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStreamRewriter;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import net.shrimpworks.unreal.scriptbrowser.entities.UClass;
+import net.shrimpworks.unreal.scriptbrowser.entities.UPackage;
 import net.shrimpworks.unreal.unrealscript.UnrealScriptBaseListener;
+import net.shrimpworks.unreal.unrealscript.UnrealScriptLexer;
 import net.shrimpworks.unreal.unrealscript.UnrealScriptParser;
 
 public class ClassFormatterListener extends UnrealScriptBaseListener {
@@ -29,6 +38,24 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	private boolean inDefaultProps = false;
 	private Optional<UClass> typePath = Optional.empty();
 	private Optional<String> structName = Optional.empty();
+
+	public static String transformClazz(UClass clazz) {
+		try (InputStream is = Files.newInputStream(clazz.path, StandardOpenOption.READ)) {
+			UnrealScriptLexer lexer = new UnrealScriptLexer(CharStreams.fromStream(is));
+			lexer.removeErrorListeners();
+			lexer.addErrorListener(UnrealScriptErrorListener.INSTANCE);
+			CommonTokenStream tokens = new CommonTokenStream(lexer);
+			UnrealScriptParser parser = new UnrealScriptParser(tokens);
+			parser.removeErrorListeners();
+			parser.addErrorListener(UnrealScriptErrorListener.INSTANCE);
+			ClassFormatterListener listener = new ClassFormatterListener(clazz, tokens);
+			ParseTreeWalker.DEFAULT.walk(listener, parser.program());
+
+			return listener.getTranslatedText();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	public ClassFormatterListener(UClass clazz, CommonTokenStream tokens) {
 		this.clazz = clazz;
