@@ -200,6 +200,15 @@ header h1 {
 }
 
 #tree .node a {
+	transition-duration: 0.5s;
+}
+
+#tree .node .target > a {
+	color: var(--source-color);
+	background-color: var(--source-bg);
+}
+
+#tree .node a {
 	cursor: pointer;
 }
 

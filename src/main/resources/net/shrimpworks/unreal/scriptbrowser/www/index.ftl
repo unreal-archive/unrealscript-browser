@@ -35,6 +35,7 @@
 					<li data-name="solarized-dark">Solarized Dark</li>
 					<li data-name="monokai-ish">Monokai-ish</li>
 					<li data-name="unrealed">UnrealEd</li>
+					<li data-name="recodex">ReCodeX</li>
 					<li data-name="">Basic</li>
 				</ul>
 			</li>
@@ -77,19 +78,28 @@
 				const item = document.createElement('li')
 				item.textContent = s.name
 				item.addEventListener("click", () => {
-					nav.src = s.path + "/tree.html?s=" + currentStyle
-					source.src = s.path + "/index.html?s=" + currentStyle
+					loadSources(s)
 
-					document.getElementById("menu-download").addEventListener("click", () => {
-						const lnk = document.createElement("a")
-						lnk.href = s.path + "/" + s.name.replaceAll(" ", "_") + ".zip"
-						lnk.click()
-					})
-
-					history.pushState(m.data, header.textContent, `#${s.path}`)
+					history.replaceState(null, header.textContent, `#${s.path}`)
 				})
 				menu.appendChild(item)
 			})
+		}
+
+		function loadSources(source) {
+			if (!shownSource || source.path !== shownSource.setPath) nav.src = source.path + "/tree.html?s=" + currentStyle
+			source.src = source.path + "/index.html?s=" + currentStyle
+
+			// configure the download button
+			document.getElementById("menu-download").addEventListener("click", () => {
+				const lnk = document.createElement("a")
+				lnk.href = source.path + "/" + source.name.replaceAll(" ", "_") + ".zip"
+				lnk.click()
+			})
+		}
+
+		function loadScript(path, pkg, clazz) {
+			source.src = `${path.toLowerCase()}/${pkg.toLowerCase()}/${clazz.toLowerCase()}.html?s=${currentStyle}`
 		}
 
 		sourcesMenu()
@@ -114,7 +124,7 @@
 			port1.onmessage = (m) => {
 				switch (m.data.event) {
 					case "nav":
-						source.src = `${m.data.path.toLowerCase()}/${m.data.pkg.toLowerCase()}/${m.data.clazz.toLowerCase()}.html?s=${currentStyle}`
+						loadScript(m.data.path, m.data.pkg, m.data.clazz)
 						break
 					default:
 						console.log("unknown message event ", m.data.type, m.data)
@@ -158,7 +168,12 @@
 					case "loaded":
 						header.innerHTML = `${m.data.set} / ${m.data.pkg} / ${m.data.clazz}`
 
-			  		history.pushState(m.data, header.textContent, `#${m.data.setPath}/${m.data.pkg}/${m.data.clazz}`)
+						if (!m.data.fromHistory) { // don't push history if this navigation was the result of a popstate
+							const currentState = `#${m.data.setPath}/${m.data.pkg}/${m.data.clazz}`
+							if (currentState !== window.location.hash) {
+								history.replaceState(null, header.textContent, currentState)
+							}
+						}
 
 			  		pushStyle(currentStyle)
 						shownSource = m.data
@@ -173,7 +188,19 @@
 			source.contentWindow.postMessage('hello source', '*', [channel.port2])
 		})
 
-		// FIXME restore state based on #url (#sources/pkg/clazz)
+		function navFromHash(hash) {
+			if (hash && hash.indexOf("/") > -1) {
+				const parts = hash.substring(1).split("/")
+				const source = sources.find((s) => s.path === parts[0])
+				loadSources(source)
+
+				if (parts.length === 3) loadScript(parts[0], parts[1], parts[2])
+			}
+		}
+
+		// restore state based on #url (#sources/pkg/clazz)
+		navFromHash(window.location.hash)
+		window.addEventListener("popstate", () => navFromHash(window.location.hash));
 	})
 </script>
 </#noparse>

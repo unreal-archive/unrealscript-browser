@@ -1,0 +1,57 @@
+:root {
+	--color: black;
+	--source-color: black;
+	--source-bg: #fafafe;
+	--secondary-bg: #f5fbfc;
+	--lines-color: #a9a9a9;
+	--lines-gb: var(--source-bg);
+	--comment: #009933;
+	--directive: #cc0000;
+	--operator: var(--source-color);
+	--keyword: var(--source-color);
+	--type: #000099;
+	--const-number: #0000ff;
+	--const-bool: #0000ff;
+	--const-string: #0000ff;
+	--const-name: #660000;
+	--const-none: #660000;
+	--var-local: var(--source-color);
+	--var-global: var(--var-local);
+}
+
+pre .kw {
+	font-weight: bold;
+}
+
+pre .dir {
+	font-weight: inherit;
+}
+
+pre .var {
+	font-weight: inherit;
+}
+
+body {
+	background-color: var(--secondary-bg);
+}
+
+#tree {
+	color: #6919b3;
+}
+
+#controls {
+	background-color: #ddd8F5;
+}
+
+header {
+	background-color: #ddd8F5;
+	border-left: 50px solid #ddd8F5;
+	color: #6919b3;
+}
+
+#right {
+	width: calc(100% - 20px);
+	height: calc(100% - 20px);
+	border: 1px inset #8A2BE2;
+	margin: 10px;
+}

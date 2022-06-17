@@ -22,9 +22,7 @@
 <body>
 	<article id="script">
 		<section id="lines">
-			<#list 1..lines as line>
-				<div>${line?c}</div>
-			</#list>
+			<#list 1..lines as line><div>${line?c}</div></#list>
 		</section>
 
 		<#outputformat "plainText">
@@ -43,7 +41,7 @@
 					"set": "${clazz.pkg.sourceSet.name}",
 					"setPath": "${clazz.pkg.sourceSet.outPath}",
 					"pkg": "${clazz.pkg.name}",
-					"clazz": "${clazz.name}"
+					"clazz": "${clazz.name}",
 			});
 
 			port2.onmessage = (m) => {

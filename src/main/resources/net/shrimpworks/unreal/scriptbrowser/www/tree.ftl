@@ -4,9 +4,7 @@
 		"set": "${node.clazz.pkg.sourceSet.name}",
 		"pkg": "${node.clazz.pkg.name}",
 		"clazz": "${node.clazz.name}",
-		"children": [
-			<#list node.children as child><@jsonnode child depth+1/>,</#list>
-		]
+		"children": [<#list node.children as child><@jsonnode child depth+1/>,</#list>]
 	}
 </#macro>
 
@@ -158,6 +156,8 @@
 
 				parent = parent.parentElement
 			}
+			node.classList.add("target")
+			setTimeout(() => node.classList.remove("target"), 2000)
 			node.scrollIntoView(true)
 		}
 
