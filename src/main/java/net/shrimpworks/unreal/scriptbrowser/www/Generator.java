@@ -99,6 +99,25 @@ public class Generator {
 		}
 	}
 
+	public static void home(USources sources, Path outPath) {
+		try {
+			if (!Files.isDirectory(outPath)) Files.createDirectories(outPath);
+
+			Template tpl = TPL_CONFIG.getTemplate("sources-home.ftl");
+			try (Writer writer = Channels.newWriter(
+				Files.newByteChannel(
+					outPath.resolve("index.html"),
+					StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING
+				), StandardCharsets.UTF_8)) {
+				tpl.process(Map.of(
+					"sources", sources
+				), writer);
+			}
+		} catch (IOException | TemplateException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public static void src(UClass clazz, Path outPath) {
 		try {
 			final Path htmlOut = outPath.resolve(clazz.pkg.name.toLowerCase());

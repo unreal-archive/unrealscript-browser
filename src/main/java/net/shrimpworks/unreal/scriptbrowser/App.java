@@ -24,7 +24,7 @@ public class App {
 
 	public static class Progress {
 
-		private static final int WIDTH = 50;
+		private static final int WIDTH = 40;
 
 		private final double total;
 
@@ -70,9 +70,9 @@ public class App {
 																	   p.progress(counter.incrementAndGet(), c);
 																	   Generator.src(c, srcOut);
 																   }));
-				System.err.printf("\r%-90s", ""); // clear progress :/
+				System.err.printf("\r%-80s", ""); // clear progress :/
 
-				// FIXME landing page/info for source set
+				Generator.home(source, srcOut);
 
 				final long genTime = System.currentTimeMillis();
 				System.err.printf("\r  - Generated HTML in %dms%n", genTime - loadedTime);

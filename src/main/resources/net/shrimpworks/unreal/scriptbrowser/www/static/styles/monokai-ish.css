@@ -22,3 +22,7 @@
 #controls li {
 	outline: 1px solid var(--source-bg);
 }
+
+img[src$=".svg"] {
+	filter: invert(0.6);
+}

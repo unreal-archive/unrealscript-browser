@@ -18,3 +18,7 @@
 	--var-local: #268bd2;
 	--var-global: var(--var-local);
 }
+
+img[src$=".svg"] {
+	filter: invert(0.75);
+}

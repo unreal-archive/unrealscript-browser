@@ -177,7 +177,7 @@ header h1 {
 	display: block;
 	height: 100%;
 	padding-left: 10px;
-	width: 100%;
+	width: calc(100% - 20px);
 	background: none;
 	border: 0;
 	font-size: 1.2em;
@@ -229,8 +229,9 @@ header h1 {
 	display: inherit;
 }
 
-/* Source View Layout */
-
+/*
+ * Source View Layout
+ */
 
 #script {
 	display: grid;
@@ -278,7 +279,48 @@ header h1 {
 	border-bottom: 0.25px dotted var(--source-color);
 }
 
-/* Code Formatting */
+/* Source set home/landing page */
+#home {
+	max-width: 400px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+#home .head {
+	font-weight: bold;
+}
+
+#home .pkg {
+	display: inline-block;
+	width: 300px;
+	padding: 5px;
+}
+
+#home .count {
+	display: inline-block;
+	width: 70px;
+	padding: 5px;
+	text-align: right;
+}
+
+#home .contents a {
+	padding: 10px;
+	background-color: var(--secondary-bg);
+	text-decoration: none;
+	color: inherit;
+	display: block;
+	text-align: center;
+}
+
+#home .contents a img {
+	max-height: 30px;
+	margin-top: -6px;
+	vertical-align: middle;
+}
+
+/*
+ * Code Formatting
+ */
 
 #script pre a[href]:hover {
 	background-color: var(--secondary-bg);

@@ -3,8 +3,8 @@
 <html lang="en">
 <head>
 	<title>UnrealScript Browser</title>
-	<link rel="stylesheet" href="static/style.css">
-	<link rel="stylesheet" href="static/solarized-light.css" id="style">
+	<link rel="stylesheet" href="static/styles/style.css">
+	<link rel="stylesheet" href="static/styles/solarized-light.css" id="style">
 	<script>
 	  const urlParams = new URLSearchParams(window.location.search);
 	  const style = document.getElementById("style")
@@ -16,7 +16,7 @@
 			currentStyle = window.localStorage.getItem("style")
 	  }
 
-		style.setAttribute("href", "static/" + currentStyle + ".css")
+		style.setAttribute("href", "static/styles/" + currentStyle + ".css")
 	</script>
 </head>
 
@@ -72,6 +72,8 @@
 
 		const styleChangeListeners = [];
 
+	  document.getElementById("menu-home").addEventListener("click", () => window.location = "index.html")
+
 		function sourcesMenu() {
 			const menu = document.getElementById("menu-sources")
 			sources.forEach(s => {
@@ -86,14 +88,14 @@
 			})
 		}
 
-		function loadSources(source) {
-			if (!shownSource || source.path !== shownSource.setPath) nav.src = source.path + "/tree.html?s=" + currentStyle
-			source.src = source.path + "/index.html?s=" + currentStyle
+		function loadSources(sources) {
+			if (!shownSource || sources.path !== shownSource.setPath) nav.src = sources.path + "/tree.html?s=" + currentStyle
+			source.src = sources.path + "/index.html?s=" + currentStyle
 
 			// configure the download button
 			document.getElementById("menu-download").addEventListener("click", () => {
 				const lnk = document.createElement("a")
-				lnk.href = source.path + "/" + source.name.replaceAll(" ", "_") + ".zip"
+				lnk.href = sources.path + "/" + sources.name.replaceAll(" ", "_") + ".zip"
 				lnk.click()
 			})
 		}
@@ -112,7 +114,7 @@
 
 		styleChangeListeners.push((s) => {
 			currentStyle = s
-			document.getElementById("style").setAttribute("href", `static/${currentStyle}.css`)
+			document.getElementById("style").setAttribute("href", `static/styles/${currentStyle}.css`)
 			window.localStorage.setItem("style", currentStyle);
 		})
 
@@ -168,14 +170,21 @@
 					case "loaded":
 						header.innerHTML = `${m.data.set} / ${m.data.pkg} / ${m.data.clazz}`
 
-						if (!m.data.fromHistory) { // don't push history if this navigation was the result of a popstate
-							const currentState = `#${m.data.setPath}/${m.data.pkg}/${m.data.clazz}`
-							if (currentState !== window.location.hash) {
-								history.replaceState(null, header.textContent, currentState)
-							}
+						const loadedState = `#${m.data.setPath}/${m.data.pkg}/${m.data.clazz}`
+						if (loadedState !== window.location.hash) {
+							history.replaceState(null, header.textContent, loadedState)
 						}
 
 			  		pushStyle(currentStyle)
+						shownSource = m.data
+						break
+					case "home":
+						header.innerHTML = `${m.data.set}`
+						const homeState = `#${m.data.setPath}`
+						if (homeState !== window.location.hash) {
+							history.replaceState(null, header.textContent, homeState)
+						}
+						pushStyle(currentStyle)
 						shownSource = m.data
 						break
 					default:

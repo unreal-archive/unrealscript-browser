@@ -12,8 +12,9 @@
 
 <html lang="en">
 <head>
-	<link rel="stylesheet" href="../static/style.css">
-	<link rel="stylesheet" href="../static/solarized-light.css" id="style">
+	<title>${nodes[0].clazz.pkg.sourceSet.name}</title>
+	<link rel="stylesheet" href="../static/styles/style.css">
+	<link rel="stylesheet" href="../static/styles/solarized-light.css" id="style">
 	<script>
 	  const urlParams = new URLSearchParams(window.location.search);
 	  const style = document.getElementById("style")
@@ -25,7 +26,7 @@
 		  currentStyle = window.localStorage.getItem("style")
 	  }
 
-		style.setAttribute("href", "../static/" + currentStyle + ".css")
+		style.setAttribute("href", "../static/styles/" + currentStyle + ".css")
 	</script>
 </head>
 
@@ -59,7 +60,7 @@
 				switch (m.data.event) {
 					case "style":
 			  		currentStyle = m.data.style
-			  		style.setAttribute("href", `../static/${currentStyle}.css`)
+			  		style.setAttribute("href", `../static/styles/${currentStyle}.css`)
 						break
 					case "goto":
 			  		gotoNode(m.data.target)
