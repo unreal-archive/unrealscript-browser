@@ -45,7 +45,7 @@ public class App {
 
 		final Path outPath = Paths.get(cli.commands()[0]);
 
-		final List<USources> sources = createSourcesFromProperties();
+		final List<USources> sources = createSourcesFromProperties(cli.option("sources", "sources.ini"));
 
 		if (!cli.flag("skip-sources")) {
 			for (USources source : sources) {
@@ -92,8 +92,8 @@ public class App {
 		System.err.println("Done");
 	}
 
-	private static List<USources> createSourcesFromProperties() throws IOException {
-		final IniFile config = new IniFile(Paths.get("sources.ini"));
+	private static List<USources> createSourcesFromProperties(String sources) throws IOException {
+		final IniFile config = new IniFile(Paths.get(sources));
 		return config.sections().stream()
 					 .map(s -> new USources(
 						 s,
