@@ -64,13 +64,24 @@ public class Generator {
 
 	public static void index(List<USources> sources, Path outPath) {
 		try {
-			Template tpl = TPL_CONFIG.getTemplate("index.ftl");
+			Template index = TPL_CONFIG.getTemplate("index.ftl");
 			try (Writer writer = Channels.newWriter(
 				Files.newByteChannel(
 					outPath.resolve("index.html"),
 					StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING
 				), StandardCharsets.UTF_8)) {
-				tpl.process(
+				index.process(
+					Map.of("sources", sources),
+					writer
+				);
+			}
+			Template home = TPL_CONFIG.getTemplate("home.ftl");
+			try (Writer writer = Channels.newWriter(
+				Files.newByteChannel(
+					outPath.resolve("home.html"),
+					StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING
+				), StandardCharsets.UTF_8)) {
+				home.process(
 					Map.of("sources", sources),
 					writer
 				);

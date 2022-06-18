@@ -7,16 +7,16 @@
 	--lines-gb: #d4d0c8;
 	--comment: #00ff00;
 	--directive: #808080;
-	--operator: white;
+	--operator: inherit;
 	--keyword: #00ffff;
-	--type: white;
-	--const-number: white;
+	--type: inherit;
+	--const-number: inherit;
 	--const-bool: #00ffff;
-	--const-string: white;
-	--const-name: white;
-	--const-none: white;
-	--var-local: white;
-	--var-global: white;
+	--const-string: inherit;
+	--const-name: inherit;
+	--const-none: inherit;
+	--var-local: inherit;
+	--var-global: inherit;
 }
 
 header {
@@ -42,4 +42,32 @@ header {
 	background-color: navy;
 	color: white;
 	cursor: pointer;
+}
+
+#controls li:hover img[src$="svg"] {
+	filter: invert(1);
+}
+
+#home {
+	color: var(--source-color);
+}
+
+#home .contents a {
+	background-color: var(--lines-gb);
+	color: black;
+	border: 2px outset;
+}
+
+#home .contents a img[src$="svg"] {
+	filter: invert(0);
+}
+
+#home img[src$="svg"] {
+	filter: invert(1);
+}
+
+#script pre a[href]:hover {
+	background-color: var(--lines-gb);
+	color: black;
+	outline: 2px outset;
 }

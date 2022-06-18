@@ -39,7 +39,7 @@
 					<li data-name="">Basic</li>
 				</ul>
 			</li>
-			<li id="menu-target" title="Select Opened Class"><img src="static/icons/target.svg" alt="goto"/></li>
+			<li id="menu-target" title="Select Current Class"><img src="static/icons/target.svg" alt="goto"/></li>
 		</ul>
 	</div>
 
@@ -198,7 +198,7 @@
 		})
 
 		function navFromHash(hash) {
-			if (hash && hash.indexOf("/") > -1) {
+			if (hash) {
 				const parts = hash.substring(1).split("/")
 				const source = sources.find((s) => s.path === parts[0])
 				loadSources(source)
@@ -208,7 +208,12 @@
 		}
 
 		// restore state based on #url (#sources/pkg/clazz)
-		navFromHash(window.location.hash)
+		if (window.location.hash) {
+			navFromHash(window.location.hash)
+		} else {
+			source.src = "home.html?s=" + currentStyle
+		}
+
 		window.addEventListener("popstate", () => navFromHash(window.location.hash));
 	})
 </script>
