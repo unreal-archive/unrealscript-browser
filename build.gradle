@@ -3,29 +3,26 @@ import java.nio.file.Files
 import java.nio.file.StandardOpenOption
 
 plugins {
-	// Apply the application plugin to add support for building a CLI application in Java.
+	id 'java'
 	id 'application'
 	id 'antlr'
 }
 
-
 group = 'net.shrimpworks'
-version = "0.1"
+version = "0.2"
 
-application {
-	// Define the main class for the application.
-	mainClass = 'net.shrimpworks.unreal.scriptbrowser.App'
-}
+mainClassName = 'net.shrimpworks.unreal.scriptbrowser.App'
 
 repositories {
-	// Use Maven Central for resolving dependencies.
 	mavenCentral()
 }
 
 dependencies {
-	antlr 'org.antlr:antlr4:4.10.1'
+	antlr 'org.antlr:antlr4:4.13.0'
 
-	implementation 'org.freemarker:freemarker:2.3.31'
+	implementation 'org.freemarker:freemarker:2.3.32'
+
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
 }
 
 jar {
@@ -33,7 +30,7 @@ jar {
 		attributes(
 				'Implementation-Title': project.name,
 				'Implementation-Version': project.version,
-				'Main-Class': application.mainClassName,
+				'Main-Class': mainClassName,
 		)
 	}
 }
@@ -54,7 +51,7 @@ task execJar(type: Jar) {
 		attributes(
 				'Implementation-Title': project.name,
 				'Implementation-Version': project.version,
-				'Main-Class': application.mainClassName,
+				'Main-Class': mainClassName,
 				'Class-Path': configurations.runtimeClasspath.files.collect { it.getName() }.join(' ')
 		)
 	}
@@ -79,12 +76,7 @@ processResources.doLast {
 			StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
 }
 
-testing {
-	suites {
-		// Configure the built-in test suite
-		test {
-			// Use JUnit Jupiter test framework
-			useJUnitJupiter('5.8.1')
-		}
-	}
+test {
+	// Use JUnit Jupiter test framework
+	useJUnitPlatform()
 }

@@ -85,6 +85,7 @@ identifier               : IDENT
                          | INPUT
                          | INT
                          | ITERATOR
+                         | INTERP
                          | LATENT
                          | LOCAL
                          | LOCALIZED
@@ -161,7 +162,7 @@ enumoption               : identifier ','?;
 
 structdecl               : STRUCT ( structparams )* identifier ( EXTENDS packageidentifier )?
                            '{' structbody '}';
-structparams             : ( NATIVE | EXPORT | CONSTRUCTIVE);
+structparams             : ( NATIVE | EXPORT | CONSTRUCTIVE | TRANSIENT );
 structbody               : ( structmember )*;
 structmember             : vardecl ';';
 
@@ -351,6 +352,7 @@ IGNORES: I G N O R E S;
 INPUT: I N P U T;
 INT: I N T;
 ITERATOR: I T E R A T O R;
+INTERP: I N T E R P;
 LATENT: L A T E N T;
 LOCAL: L O C A L;
 LOCALIZED: L O C A L I Z E D;
