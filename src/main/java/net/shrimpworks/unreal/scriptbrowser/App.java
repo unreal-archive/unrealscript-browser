@@ -52,14 +52,14 @@ public class App {
 
 				System.err.printf("Generating sources for %s%n", source.name);
 				loadSources(source);
-//				printTree(children(source, null), 0);
+//				printTree(source.children(), 0);
 
 				final long loadedTime = System.currentTimeMillis();
 
 				final Path srcOut = outPath.resolve(source.outPath);
 
 				System.err.println("  - Generating navigation tree");
-				Generator.tree(children(source, null), srcOut);
+				Generator.tree(source.children(), srcOut);
 
 				System.err.println("  - Generating source pages");
 				Progress p = new Progress(source.classCount());
@@ -79,6 +79,7 @@ public class App {
 
 				System.err.println("  - Generating source archive");
 				ZipGenerator.zipSources(source, srcOut);
+				ZipGenerator.zipTree(source, srcOut);
 
 				final long zipTime = System.currentTimeMillis();
 				System.err.printf("\r  - Generated source archive in %dms%n", zipTime - genTime);
@@ -139,19 +140,6 @@ public class App {
 		final long loadedTime = System.currentTimeMillis();
 		System.err.printf("  - Loaded %d classes in %d packages in %dms%n",
 						  sources.classCount(), sources.packages.size(), loadedTime - startTime);
-	}
-
-	public static List<UClassNode> children(USources sources, UClass parent) {
-		return sources.packages.values().stream()
-							   .flatMap(p -> p.classes.values().stream())
-							   .filter(c -> c.kind == UClass.UClassKind.CLASS)
-							   .filter(c -> {
-								   if (parent == null && c.parent == null) return true;
-								   else return parent != null && parent.name.equalsIgnoreCase(c.parent);
-							   })
-							   .sorted()
-							   .map(c -> new UClassNode(c, children(sources, c)))
-							   .collect(Collectors.toList());
 	}
 
 	public static void printTree(List<UClassNode> nodes, int depth) {

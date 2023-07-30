@@ -28,7 +28,12 @@
 			<li title="Select Source Set"><img src="static/icons/file-code.svg" alt="sources"/>
 				<ul id="menu-sources" class="dropdown"></ul>
 			</li>
-			<li id="menu-download" title="Download Current Sources"><img src="static/icons/file-download.svg" alt="download"/></li>
+			<li title="Download Selected Sources"><img src="static/icons/file-download.svg" alt="download"/>
+				<ul id="menu-download" class="dropdown">
+					<li id="menu-download-packages">Download Sources (by package)</li>
+					<li id="menu-download-tree">Download Sources (as class tree)</li>
+				</ul>
+			</li>
 			<li title="Set Highlighting Style"><img src="static/icons/palette.svg" alt="style"/>
 				<ul id="menu-styles" class="dropdown">
 					<li data-name="solarized-light">Solarized Light</li>
@@ -92,10 +97,15 @@
 			if (!shownSource || sources.path !== shownSource.setPath) nav.src = sources.path + "/tree.html?s=" + currentStyle
 			source.src = sources.path + "/index.html?s=" + currentStyle
 
-			// configure the download button
-			document.getElementById("menu-download").addEventListener("click", () => {
+			// configure the download buttons
+			document.getElementById("menu-download-packages").addEventListener("click", () => {
 				const lnk = document.createElement("a")
 				lnk.href = sources.path + "/" + sources.name.replaceAll(" ", "_") + ".zip"
+				lnk.click()
+			})
+			document.getElementById("menu-download-tree").addEventListener("click", () => {
+				const lnk = document.createElement("a")
+				lnk.href = sources.path + "/" + sources.name.replaceAll(" ", "_") + "_tree.zip"
 				lnk.click()
 			})
 		}

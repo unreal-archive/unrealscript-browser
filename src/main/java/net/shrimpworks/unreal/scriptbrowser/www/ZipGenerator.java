@@ -7,9 +7,11 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Map;
 
 import net.shrimpworks.unreal.scriptbrowser.entities.UClass;
+import net.shrimpworks.unreal.scriptbrowser.entities.UClassNode;
 import net.shrimpworks.unreal.scriptbrowser.entities.UPackage;
 import net.shrimpworks.unreal.scriptbrowser.entities.USources;
 
@@ -35,5 +37,28 @@ public class ZipGenerator {
 		}
 
 		return zipFile;
+	}
+
+	public static Path zipTree(USources sources, Path outPath) throws IOException {
+		List<UClassNode> tree = sources.children();
+
+		final Path zipFile = outPath.resolve(String.format("%s_tree.zip", sources.name.replaceAll(" ", "_")));
+		if (!Files.isDirectory(zipFile.getParent())) Files.createDirectories(zipFile.getParent());
+
+		final URI uri = URI.create(String.format("jar:file:%s", zipFile.toAbsolutePath()));
+
+		try (FileSystem zipfs = FileSystems.newFileSystem(uri, Map.of("create", "true"))) {
+			for (UClassNode node : tree) addNode(zipfs.getPath(node.clazz.name), node);
+		}
+
+		return zipFile;
+	}
+
+	private static void addNode(Path path, UClassNode node) throws IOException {
+		if (!Files.exists(path)) Files.createDirectories(path);
+		Path dest = path.resolve(String.format("%s.uc", node.clazz.name));
+		Files.copy(node.clazz.path, dest, StandardCopyOption.REPLACE_EXISTING);
+
+		for (UClassNode child : node.children) addNode(path.resolve(child.clazz.name), child);
 	}
 }

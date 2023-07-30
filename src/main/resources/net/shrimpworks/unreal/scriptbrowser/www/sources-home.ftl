@@ -33,7 +33,11 @@
 		</#list>
 		<a href="${sources.name?replace(" ", "_") + ".zip"}">
 			<img src="../static/icons/file-download.svg" alt="download"/>
-			Download Sources
+			Download Sources (by package)
+		</a>
+		<a href="${sources.name?replace(" ", "_") + "_tree.zip"}">
+			<img src="../static/icons/file-download.svg" alt="download"/>
+			Download Sources (as class tree)
 		</a>
 	</div>
 </article>
