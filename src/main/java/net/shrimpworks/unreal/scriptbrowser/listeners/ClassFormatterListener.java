@@ -100,6 +100,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	public void enterClassdecl(UnrealScriptParser.ClassdeclContext ctx) {
 		tokenStyle(ctx.CLASS(), "kw");
 		tokenStyle(ctx.classname(), "cls");
+		tokenAnchor(ctx.CLASS().getSymbol(), "class");
 		tokenStyle(ctx.parentclass(), "cls");
 		ctx.classparams().forEach(p -> tokenStyle(p, "kw"));
 		tokenStyle(ctx.EXPANDS(), "kw");
@@ -411,6 +412,7 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 	@Override
 	public void enterReplicationblock(UnrealScriptParser.ReplicationblockContext ctx) {
 		tokenStyle(ctx.REPLICATION(), "kw");
+		tokenAnchor(ctx.REPLICATION().getSymbol(), "replication");
 	}
 
 	@Override
@@ -434,7 +436,17 @@ public class ClassFormatterListener extends UnrealScriptBaseListener {
 		ctx.stateparams().forEach(p -> tokenStyle(p, "kw"));
 		tokenStyle(ctx.STATE(), "kw");
 		tokenStyle(ctx.EXTENDS(), "kw");
-		ctx.identifier().forEach(i -> tokenStyle(i, "cls"));
+		tokenStyle(ctx.statename(), "cls");
+		tokenStyle(ctx.identifier(), "cls");
+		tokenAnchor(ctx.statename(), ctx.statename().getText());
+	}
+
+	@Override
+	public void enterStateignore(UnrealScriptParser.StateignoreContext ctx) {
+		ctx.identifier().forEach(i -> {
+			clazz.function(i.getText())
+				 .ifPresent(v -> memberLink(i, v));
+		});
 	}
 
 	@Override

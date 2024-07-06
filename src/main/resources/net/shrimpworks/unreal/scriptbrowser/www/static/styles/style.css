@@ -4,7 +4,10 @@
 	--source-bg: white;
 	--secondary-bg: #e9e9e9;
 	--lines-color: gray;
-	--lines-gb: #e9e9e9;
+	--lines-bg: #e9e9e9;
+	--members-color: var(--lines-color);
+	--members-bg: var(--lines-bg);
+	--members-link-color: var(--color);
 	--comment: gray;
 	--directive: darkgreen;
 	--operator: brown;
@@ -51,7 +54,7 @@ header {
 	padding-left: 10px;
 
 	background-color: var(--source-bg);
-	border-left: 50px solid var(--lines-gb);
+	border-left: 50px solid var(--lines-bg);
 }
 
 /* Source tree and class filtering */
@@ -236,8 +239,8 @@ header h1 {
 
 #script {
 	display: grid;
-	grid-template: "lines source";
-	grid-template-columns: 50px 1fr;
+	grid-template: "members lines source";
+	grid-template-columns: 250px 50px 1fr;
 	grid-gap: 10px;
 
 	width: 100vw;
@@ -246,6 +249,35 @@ header h1 {
 	background-color: var(--source-bg);
 
 	font-size: 1.1em;
+}
+
+#members {
+	grid-area: members;
+	position: fixed;
+	height: 100%;
+	overflow: scroll;
+	width: 250px;
+	padding: 5px;
+
+	font-size: 1em;
+	line-height: 1.3em;
+
+	color: var(--members-color);
+	background-color: var(--members-bg);
+}
+
+#members a {
+	color: var(--members-link-color);
+	text-decoration: none;
+}
+
+#members .title {
+	font-weight: bold;
+}
+
+#members .group {
+	font-family: monospace;
+	padding: 5px 0 10px 10px;
 }
 
 #lines {
@@ -259,7 +291,7 @@ header h1 {
 	line-height: 1.4em;
 
 	color: var(--lines-color);
-	background-color: var(--lines-gb);
+	background-color: var(--lines-bg);
 }
 
 #script pre {

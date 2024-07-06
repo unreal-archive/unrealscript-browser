@@ -4,7 +4,7 @@
 	--source-bg: #000040;
 	--secondary-bg: white;
 	--lines-color: black;
-	--lines-gb: #d4d0c8;
+	--lines-bg: #d4d0c8;
 	--comment: #00ff00;
 	--directive: #808080;
 	--operator: inherit;
@@ -20,18 +20,18 @@
 }
 
 header {
-	background-color: var(--lines-gb);
+	background-color: var(--lines-bg);
 }
 
 #controls {
-	background-color: var(--lines-gb);
+	background-color: var(--lines-bg);
 	grid-area: controls;
 }
 
 #controls li {
 	outline: 0;
 	border: 2px outset;
-	background-color: var(--lines-gb);
+	background-color: var(--lines-bg);
 }
 
 #controls ul li ul {
@@ -53,7 +53,7 @@ header {
 }
 
 #home .contents a {
-	background-color: var(--lines-gb);
+	background-color: var(--lines-bg);
 	color: black;
 	border: 2px outset;
 }
@@ -67,7 +67,7 @@ header {
 }
 
 #script pre a[href]:hover {
-	background-color: var(--lines-gb);
+	background-color: var(--lines-bg);
 	color: black;
 	outline: 2px outset;
 }

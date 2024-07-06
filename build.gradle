@@ -9,7 +9,7 @@ plugins {
 }
 
 group = 'net.shrimpworks'
-version = "1.1"
+version = "1.2"
 
 mainClassName = 'net.shrimpworks.unreal.scriptbrowser.App'
 
@@ -20,7 +20,7 @@ repositories {
 dependencies {
 	antlr 'org.antlr:antlr4:4.13.1'
 
-	implementation 'org.freemarker:freemarker:2.3.32'
+	implementation 'org.freemarker:freemarker:2.3.33'
 
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
 }

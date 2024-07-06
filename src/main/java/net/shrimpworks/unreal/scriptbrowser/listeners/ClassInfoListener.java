@@ -77,8 +77,8 @@ public class ClassInfoListener extends UnrealScriptBaseListener {
 
 	@Override
 	public void enterStatedecl(UnrealScriptParser.StatedeclContext ctx) {
-		if (!inState) return;
-		ctx.identifier().forEach(i -> clazz.addMember(UClass.UMember.UMemberKind.STATE, null, i.getText()));
+//		if (!inState) return;
+		clazz.addMember(UClass.UMember.UMemberKind.STATE, null, ctx.statename().identifier().getText());
 	}
 
 	@Override

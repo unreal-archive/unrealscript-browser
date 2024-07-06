@@ -36,6 +36,8 @@ public class UClass implements Comparable<UClass> {
 	}
 
 	public void addMember(UMember.UMemberKind kind, String type, String name) {
+		if (members.stream().anyMatch(m -> m.kind == kind && m.name.equalsIgnoreCase(name))) return;
+
 		members.add(new UMember(this, kind, type, name));
 	}
 
@@ -73,6 +75,25 @@ public class UClass implements Comparable<UClass> {
 	public Optional<UMember> function(String name) {
 		return localMember(UMember.UMemberKind.FUNCTION, name)
 			.or(() -> functions().stream().filter(v -> v.name.equalsIgnoreCase(name)).findFirst());
+	}
+
+	public Set<UMember> localVariables() {
+		return localMembers(UMember.UMemberKind.VARIABLE)
+			// since this is used for listing in the UI, we don't actually want to surface default and super
+			.stream().filter(m -> !m.name.equalsIgnoreCase("default") && !m.name.equalsIgnoreCase("super"))
+			.collect(Collectors.toSet());
+	}
+	public Set<UMember> localFunctions() {
+		return localMembers(UMember.UMemberKind.FUNCTION);
+	}
+	public Set<UMember> localStructs() {
+		return localMembers(UMember.UMemberKind.STRUCT);
+	}
+	public Set<UMember> localEnums() {
+		return localMembers(UMember.UMemberKind.ENUM);
+	}
+	public Set<UMember> localStates() {
+		return localMembers(UMember.UMemberKind.STATE);
 	}
 
 	private Set<UMember> members(UMember.UMemberKind kind) {

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,8 +36,8 @@ public class App {
 		public void progress(int processed, UClass current) {
 			int prog = (int)((processed / total) * WIDTH);
 			int space = WIDTH - prog;
-			System.err.printf("\r    [%s%s] %d/%d: %-20s", "=".repeat(prog), " ".repeat(space),
-							  processed, (int)total, current.name.substring(0, Math.min(20, current.name.length())));
+			System.err.printf("\r    [%s%s] %d/%d: %-30s", "=".repeat(prog), " ".repeat(space),
+							  processed, (int)total, current.name.substring(0, Math.min(30, current.name.length())));
 		}
 	}
 
@@ -64,13 +65,14 @@ public class App {
 				System.err.println("  - Generating source pages");
 				Progress p = new Progress(source.classCount());
 				AtomicInteger counter = new AtomicInteger();
-				source.packages.values().forEach(pkg -> pkg.classes.values().parallelStream()
-																   .filter(c -> c.kind == UClass.UClassKind.CLASS)
-																   .forEach(c -> {
-																	   p.progress(counter.incrementAndGet(), c);
-																	   Generator.src(c, srcOut);
-																   }));
-				System.err.printf("\r%-80s", ""); // clear progress :/
+				source.packages.values().parallelStream()
+							   .forEach(pkg -> pkg.classes.values().parallelStream()
+														  .filter(c -> c.kind == UClass.UClassKind.CLASS)
+														  .forEach(c -> {
+															  p.progress(counter.incrementAndGet(), c);
+															  Generator.src(c, srcOut);
+														  }));
+				System.err.printf("\r%-90s", ""); // clear progress :/
 
 				Generator.home(source, srcOut);
 
@@ -118,12 +120,13 @@ public class App {
 		try (Stream<Path> paths = Files.list(srcPath)) {
 			System.err.printf("  - Loading classes from %s%n", srcPath);
 
-			paths.map(p -> {
+			paths.parallel()
+				 .map(p -> {
 					 if (!Files.isDirectory(p)) return null;
 					 final UPackage pkg = new UPackage(sources, fileName(p));
 
 					 try (Stream<Path> all = Files.walk(p, 3)) {
-						 all.forEach(f -> {
+						 all.parallel().forEach(f -> {
 							 if (!extension(f).equalsIgnoreCase("uc")) return;
 
 							 ClassInfoListener.processFile(f, pkg);

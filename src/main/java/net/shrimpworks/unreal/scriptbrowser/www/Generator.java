@@ -32,7 +32,7 @@ import net.shrimpworks.unreal.scriptbrowser.listeners.ClassFormatterListener;
 
 public class Generator {
 
-	private static final Configuration TPL_CONFIG = new Configuration(Configuration.VERSION_2_3_31);
+	private static final Configuration TPL_CONFIG = new Configuration(Configuration.VERSION_2_3_32);
 
 	static {
 		TPL_CONFIG.setClassForTemplateLoading(Generator.class, "");

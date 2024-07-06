@@ -75,7 +75,10 @@
 			while (tree.firstChild) {
 		  	tree.removeChild(tree.lastChild);
 			}
-			nodes.forEach(n => tree.appendChild(treeNode(n, 0)))
+			nodes.forEach(n => tree.appendChild(treeNode(n, 0)));
+
+			// open the root node
+			tree.querySelector('div.children').classList.toggle("open");
 		}
 
 	  function treeNode(node, depth) {

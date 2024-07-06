@@ -4,7 +4,7 @@
 	--source-bg: #272822;
 	--secondary-bg: #3c3f41;
 	--lines-color: #6e6f6c;
-	--lines-gb: var(--source-bg);
+	--lines-bg: var(--source-bg);
 	--comment: #74715e;
 	--directive: var(--comment);
 	--operator: #f92772;

@@ -177,7 +177,8 @@ replicationidentifiers   : identifier ( ',' identifier )*;
 body                     : ( statedecl | functiondecl )+;
 
 // State parts
-statedecl                : ( stateparams )* STATE ('(' ')')? identifier ( configgroup )? ( EXTENDS identifier )? statebody;
+statename								 : identifier;
+statedecl                : ( stateparams )* STATE ('(' ')')? statename ( configgroup )? ( EXTENDS identifier )? statebody;
 statebody                : '{' ( stateignore )? ( functiondecl )* statelabels '}';
 stateignore              : IGNORES identifier ( ',' identifier )* ';';
 statelabel               : identifier ':' ( statement )*;
