@@ -18,11 +18,11 @@ repositories {
 }
 
 dependencies {
-	antlr 'org.antlr:antlr4:4.13.1'
+	antlr 'org.antlr:antlr4:4.13.2'
 
-	implementation 'org.freemarker:freemarker:2.3.33'
+	implementation 'org.freemarker:freemarker:2.3.34'
 
-	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.12.0'
 }
 
 jar {
@@ -35,7 +35,7 @@ jar {
 	}
 }
 
-task execJar(type: Jar) {
+tasks.register("execJar", Jar, {
 	// exclude jar signatures - else it invalidates our fat jar
 	exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
 
@@ -60,7 +60,7 @@ task execJar(type: Jar) {
 	from {
 		configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
 	}
-}
+})
 
 /**
  * Create list of static files, used for later extraction from the jar to disk.
