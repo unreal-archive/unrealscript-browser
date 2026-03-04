@@ -1,4 +1,4 @@
-package net.shrimpworks.unreal.scriptbrowser;
+package org.unrealarchive.scriptbrowser;
 
 import java.io.BufferedReader;
 import java.io.IOException;

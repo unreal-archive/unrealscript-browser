@@ -6,23 +6,26 @@ plugins {
 	id 'java'
 	id 'application'
 	id 'antlr'
+	alias(libs.plugins.shadow)
 }
 
-group = 'net.shrimpworks'
-version = "1.2"
-
-mainClassName = 'net.shrimpworks.unreal.scriptbrowser.App'
+group = 'org.unrealarchive'
+version = "1.3"
+application {
+	mainClass = 'org.unrealarchive.scriptbrowser.Main'
+}
 
 repositories {
 	mavenCentral()
 }
 
 dependencies {
-	antlr 'org.antlr:antlr4:4.13.2'
+	antlr(libs.antlr.core)
 
-	implementation 'org.freemarker:freemarker:2.3.34'
+	implementation(libs.freemarker)
 
-	testImplementation 'org.junit.jupiter:junit-jupiter:5.12.0'
+	testImplementation(libs.junit.jupiter)
+	testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 jar {
@@ -30,44 +33,26 @@ jar {
 		attributes(
 				'Implementation-Title': project.name,
 				'Implementation-Version': project.version,
-				'Main-Class': mainClassName,
+				'Main-Class': application.mainClass,
 		)
 	}
 }
 
-tasks.register("execJar", Jar, {
-	// exclude jar signatures - else it invalidates our fat jar
-	exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+shadowJar {
+	archiveClassifier.set('all')
+	mergeServiceFiles()
+}
 
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-	archiveClassifier = "exec"
-	archiveFileName = "${archiveBaseName.get()}-${archiveClassifier.get()}.${archiveExtension.get()}"
-	from sourceSets.main.output
-
-	dependsOn configurations.runtimeClasspath
-
-	manifest {
-		attributes(
-				'Implementation-Title': project.name,
-				'Implementation-Version': project.version,
-				'Main-Class': mainClassName,
-				'Class-Path': configurations.runtimeClasspath.files.collect { it.getName() }.join(' ')
-		)
-	}
-
-	// build the fat executable jar file
-	from {
-		configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
-	}
-})
+tasks.named('build') {
+	dependsOn tasks.named('shadowJar')
+}
 
 /**
  * Create list of static files, used for later extraction from the jar to disk.
  */
 processResources.doLast {
-	def wwwStaticDir = projectDir.toPath().resolve('src/main/resources/net/shrimpworks/unreal/scriptbrowser/www/static')
-	def destFile = buildDir.toPath().resolve('resources/main/net/shrimpworks/unreal/scriptbrowser/www/static.list')
+	def wwwStaticDir = projectDir.toPath().resolve('src/main/resources/org/unrealarchive/scriptbrowser/www/static')
+	def destFile = buildDir.toPath().resolve('resources/main/org/unrealarchive/scriptbrowser/www/static.list')
 	def staticList = new StringBuilder()
 	files { fileTree(wwwStaticDir).matching { exclude('**/*.xcf') } }.each {
 		staticList.append(wwwStaticDir.getParent().relativize(it.toPath())).append("\t").append(it.lastModified()).append("\n")
@@ -77,6 +62,5 @@ processResources.doLast {
 }
 
 test {
-	// Use JUnit Jupiter test framework
 	useJUnitPlatform()
 }

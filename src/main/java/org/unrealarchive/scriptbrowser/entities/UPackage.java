@@ -1,4 +1,4 @@
-package net.shrimpworks.unreal.scriptbrowser.entities;
+package org.unrealarchive.scriptbrowser.entities;
 
 import java.util.Map;
 import java.util.Optional;

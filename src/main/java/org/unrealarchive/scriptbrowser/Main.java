@@ -1,10 +1,9 @@
-package net.shrimpworks.unreal.scriptbrowser;
+package org.unrealarchive.scriptbrowser;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -13,15 +12,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import net.shrimpworks.unreal.scriptbrowser.entities.UClass;
-import net.shrimpworks.unreal.scriptbrowser.entities.UClassNode;
-import net.shrimpworks.unreal.scriptbrowser.entities.UPackage;
-import net.shrimpworks.unreal.scriptbrowser.entities.USources;
-import net.shrimpworks.unreal.scriptbrowser.listeners.ClassInfoListener;
-import net.shrimpworks.unreal.scriptbrowser.www.Generator;
-import net.shrimpworks.unreal.scriptbrowser.www.ZipGenerator;
+import org.unrealarchive.scriptbrowser.entities.UClass;
+import org.unrealarchive.scriptbrowser.entities.UClassNode;
+import org.unrealarchive.scriptbrowser.entities.UPackage;
+import org.unrealarchive.scriptbrowser.entities.USources;
+import org.unrealarchive.scriptbrowser.listeners.ClassInfoListener;
+import org.unrealarchive.scriptbrowser.www.Generator;
+import org.unrealarchive.scriptbrowser.www.ZipGenerator;
 
-public class App {
+public class Main {
 
 	public static class Progress {
 

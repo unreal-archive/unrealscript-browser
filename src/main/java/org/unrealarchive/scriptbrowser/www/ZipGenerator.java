@@ -1,4 +1,4 @@
-package net.shrimpworks.unreal.scriptbrowser.www;
+package org.unrealarchive.scriptbrowser.www;
 
 import java.io.IOException;
 import java.net.URI;
@@ -10,10 +10,10 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 
-import net.shrimpworks.unreal.scriptbrowser.entities.UClass;
-import net.shrimpworks.unreal.scriptbrowser.entities.UClassNode;
-import net.shrimpworks.unreal.scriptbrowser.entities.UPackage;
-import net.shrimpworks.unreal.scriptbrowser.entities.USources;
+import org.unrealarchive.scriptbrowser.entities.UClass;
+import org.unrealarchive.scriptbrowser.entities.UClassNode;
+import org.unrealarchive.scriptbrowser.entities.UPackage;
+import org.unrealarchive.scriptbrowser.entities.USources;
 
 public class ZipGenerator {
 

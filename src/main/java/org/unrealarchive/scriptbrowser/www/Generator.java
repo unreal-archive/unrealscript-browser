@@ -1,4 +1,4 @@
-package net.shrimpworks.unreal.scriptbrowser.www;
+package org.unrealarchive.scriptbrowser.www;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
@@ -25,10 +25,10 @@ import freemarker.template.DefaultObjectWrapper;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 
-import net.shrimpworks.unreal.scriptbrowser.entities.UClass;
-import net.shrimpworks.unreal.scriptbrowser.entities.UClassNode;
-import net.shrimpworks.unreal.scriptbrowser.entities.USources;
-import net.shrimpworks.unreal.scriptbrowser.listeners.ClassFormatterListener;
+import org.unrealarchive.scriptbrowser.entities.UClass;
+import org.unrealarchive.scriptbrowser.entities.UClassNode;
+import org.unrealarchive.scriptbrowser.entities.USources;
+import org.unrealarchive.scriptbrowser.listeners.ClassFormatterListener;
 
 public class Generator {
 

@@ -1,0 +1,17 @@
+[versions]
+antlr = "4.13.2"
+freemarker = "2.3.34"
+
+junit = "5.12.0"
+
+shadow = "9.3.1"
+
+[libraries]
+antlr-core = { group = "org.antlr", name = "antlr4", version.ref = "antlr" }
+freemarker = { group = "org.freemarker", name = "freemarker", version.ref = "freemarker" }
+
+junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
+
+[plugins]
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }

@@ -1,10 +1,8 @@
-package net.shrimpworks.unreal.scriptbrowser.listeners;
+package org.unrealarchive.scriptbrowser.listeners;
 
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
-
-import net.shrimpworks.unreal.scriptbrowser.App;
 
 public class UnrealScriptErrorListener extends BaseErrorListener {
 

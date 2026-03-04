@@ -1,4 +1,4 @@
-package net.shrimpworks.unreal.scriptbrowser.listeners;
+package org.unrealarchive.scriptbrowser.listeners;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,8 +12,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
-import net.shrimpworks.unreal.scriptbrowser.entities.UClass;
-import net.shrimpworks.unreal.scriptbrowser.entities.UPackage;
+import org.unrealarchive.scriptbrowser.entities.UClass;
+import org.unrealarchive.scriptbrowser.entities.UPackage;
 import net.shrimpworks.unreal.unrealscript.UnrealScriptBaseListener;
 import net.shrimpworks.unreal.unrealscript.UnrealScriptLexer;
 import net.shrimpworks.unreal.unrealscript.UnrealScriptParser;
